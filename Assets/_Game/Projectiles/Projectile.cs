@@ -15,6 +15,10 @@ namespace TankGame.Projectiles
         private bool finished;
 
         public int OwnerPlayerIndex { get; private set; } = -1;
+        public bool IsInitialized => initialized;
+        public bool IsFinished => finished;
+
+        public event Action<Projectile> Completed;
 
         private void Awake()
         {
@@ -57,7 +61,7 @@ namespace TankGame.Projectiles
                 finished = true;
                 if (body != null)
                     body.simulated = false;
-                Destroy(gameObject);
+                CompleteAndDestroy();
             }
         }
 
@@ -74,6 +78,18 @@ namespace TankGame.Projectiles
             try
             {
                 ExplosionDamage.Apply(impactPosition, damage, explosionRadius);
+            }
+            finally
+            {
+                CompleteAndDestroy();
+            }
+        }
+
+        private void CompleteAndDestroy()
+        {
+            try
+            {
+                Completed?.Invoke(this);
             }
             finally
             {
