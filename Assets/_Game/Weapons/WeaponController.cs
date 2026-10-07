@@ -35,7 +35,17 @@ namespace TankGame.Weapons
             Vector2 velocity = launchDirection * currentWeapon.LaunchSpeed;
             Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(launchDirection.y, launchDirection.x) * Mathf.Rad2Deg);
             Projectile projectile = Instantiate(currentWeapon.ProjectilePrefab, position, rotation);
-            projectile.Initialize(ownerPlayerIndex, damage, radius, velocity);
+            try
+            {
+                projectile.Initialize(ownerPlayerIndex, damage, radius, velocity);
+            }
+            catch
+            {
+                Rigidbody2D body = projectile.GetComponent<Rigidbody2D>();
+                if (body != null) body.simulated = false;
+                Destroy(projectile.gameObject);
+                throw;
+            }
             return projectile;
         }
 

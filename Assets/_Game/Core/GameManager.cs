@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TankGame.Core
@@ -20,7 +21,23 @@ namespace TankGame.Core
 
             MatchState previousState = CurrentState;
             CurrentState = nextState;
-            StateChanged?.Invoke(previousState, nextState);
+            Action<MatchState, MatchState> handlers = StateChanged;
+            if (handlers == null)
+                return;
+
+            // One failing listener must not prevent lifecycle cleanup in other listeners.
+            List<Exception> errors = null;
+            foreach (Action<MatchState, MatchState> handler in handlers.GetInvocationList())
+            {
+                try { handler(previousState, nextState); }
+                catch (Exception error)
+                {
+                    if (errors == null) errors = new List<Exception>();
+                    errors.Add(error);
+                }
+            }
+            if (errors != null)
+                throw new AggregateException("Match state changed, but a state listener failed.", errors);
         }
     }
 }

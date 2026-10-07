@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TankGame.Player;
 using TankGame.Projectiles;
 using UnityEngine;
@@ -89,6 +90,7 @@ namespace TankGame.Core
                 || projectile.OwnerPlayerIndex != turnManager.CurrentPlayerIndex)
                 throw new ArgumentException("Use an active, initialized projectile belonging to the current player.", nameof(projectile));
 
+            int firingPlayerIndex = turnManager.CurrentPlayerIndex;
             coordinating = true;
             try
             {
@@ -97,15 +99,49 @@ namespace TankGame.Core
                 DisablePlayers();
                 if (matchRunning)
                     gameManager.ChangeState(MatchState.ProjectileFlying);
-            }
-            finally
-            {
                 coordinating = false;
                 if (completionPending && matchRunning)
                 {
                     completionPending = false;
                     OnProjectileCompleted(activeProjectile);
                 }
+            }
+            catch (Exception registrationError)
+            {
+                coordinating = true;
+                completionPending = false;
+                DetachProjectile();
+                try
+                {
+                    if (matchRunning)
+                    {
+                        if (gameManager.CurrentState == MatchState.TurnActive && !projectile.IsFinished
+                            && turnManager.CurrentPlayerIndex == firingPlayerIndex)
+                        {
+                            players[turnManager.CurrentPlayerIndex].EnableControl();
+                            if (!players[turnManager.CurrentPlayerIndex].CanAct)
+                                throw new InvalidOperationException("Could not restore active player control.");
+                        }
+                        else
+                        {
+                            EndMatch();
+                        }
+                    }
+                }
+                catch (Exception recoveryError)
+                {
+                    try { EndMatch(); }
+                    catch (Exception endError)
+                    {
+                        throw new AggregateException(registrationError, recoveryError, endError);
+                    }
+                    throw new AggregateException(registrationError, recoveryError);
+                }
+                throw;
+            }
+            finally
+            {
+                coordinating = false;
             }
         }
 
@@ -122,8 +158,18 @@ namespace TankGame.Core
                 matchRunning = false;
                 completionPending = false;
                 DetachProjectile();
-                DisablePlayers();
-                gameManager.ChangeState(MatchState.MatchEnded);
+                var errors = new List<Exception>();
+                foreach (IPlayerController player in players)
+                {
+                    if (player == null || (player is UnityEngine.Object unityPlayer && unityPlayer == null))
+                        continue;
+                    try { player.DisableControl(); }
+                    catch (Exception error) { errors.Add(error); }
+                }
+                try { gameManager.ChangeState(MatchState.MatchEnded); }
+                catch (Exception error) { errors.Add(error); }
+                if (errors.Count > 0)
+                    throw new AggregateException("Match ended, but a lifecycle callback failed.", errors);
             }
             finally
             {
@@ -157,6 +203,12 @@ namespace TankGame.Core
                 turnManager.AdvanceTurn();
                 if (matchRunning)
                     ActivateCurrentTurn();
+            }
+            catch (Exception completionError)
+            {
+                try { EndMatch(); }
+                catch (Exception endError) { throw new AggregateException(completionError, endError); }
+                throw;
             }
             finally
             {
