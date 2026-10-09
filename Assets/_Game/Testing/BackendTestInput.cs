@@ -16,6 +16,7 @@ namespace TankGame.Testing
         [SerializeField] private Transform playerZeroMuzzle = null;
         [SerializeField] private Transform playerOneMuzzle = null;
         [SerializeField, Min(1f)] private float aimRate = 60f;
+        [SerializeField] private bool playerOneIsAI = false;
         private int movingPlayer = -1;
 
         private void Start()
@@ -42,6 +43,11 @@ namespace TankGame.Testing
             }
 
             int index = turnManager.CurrentPlayerIndex;
+            if (playerOneIsAI && index == 1)
+            {
+                movingPlayer = -1;
+                return;
+            }
             float movement = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
             if (movement != 0f)
             {
