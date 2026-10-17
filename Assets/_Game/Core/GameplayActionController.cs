@@ -97,7 +97,8 @@ namespace TankGame.Core
             Projectile projectile = null;
             try
             {
-                projectile = player.Weapon.Fire(playerIndex, player.Muzzle.position, direction);
+                player.Aim.SetWorldAimDirection(direction);
+                projectile = player.Weapon.Fire(playerIndex, player.Muzzle.position, player.Aim.WorldAimDirection);
                 if (projectile == null || !projectile.IsInitialized || projectile.IsFinished
                     || !projectile.isActiveAndEnabled || projectile.OwnerPlayerIndex != playerIndex)
                     throw new InvalidOperationException("Weapon did not create a valid active projectile.");

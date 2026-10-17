@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TankGame.Core;
+using TankGame.Terrain;
 using UnityEngine;
 
 namespace TankGame.Projectiles
@@ -17,17 +18,22 @@ namespace TankGame.Projectiles
                 throw new ArgumentOutOfRangeException(nameof(damage));
             if (float.IsNaN(radius) || float.IsInfinity(radius) || radius < 0f)
                 throw new ArgumentOutOfRangeException(nameof(radius));
-            if (damage == 0f)
-                return;
 
             Collider2D[] colliders = Physics2D.OverlapCircleAll(center, radius);
             var targets = new HashSet<IDamageable>();
+            var terrains = new HashSet<DestructibleTerrain>();
             foreach (Collider2D collider in colliders)
             {
+                var terrain = collider.GetComponentInParent<DestructibleTerrain>();
+                if (terrain != null) terrains.Add(terrain);
                 IDamageable target = collider.GetComponentInParent<IDamageable>();
                 if (target != null)
                     targets.Add(target);
             }
+
+            foreach (DestructibleTerrain terrain in terrains)
+                terrain.Carve(center, radius);
+            if (damage == 0f) return;
 
             foreach (IDamageable target in targets)
             {
