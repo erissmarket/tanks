@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08609396b9394ff89a7e0ec3539f4df0, type: 3}
+  m_Name: Weapon_Railgun
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
+  weaponId: weapon-railgun
+  weaponName: Railgun
+  projectilePrefab: {fileID: 2324664555139329534, guid: 71ef2ad7593e2b94c890cd4e75d59b4c, type: 3}
+  baseDamage: 40
+  launchSpeed: 28
+  explosionRadius: 1.2

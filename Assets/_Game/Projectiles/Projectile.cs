@@ -8,6 +8,7 @@ namespace TankGame.Projectiles
     {
         [SerializeField, Min(0.01f)] private float maximumLifetime = 10f;
         private Rigidbody2D body;
+        private IProjectileImpactHandler impactHandler;
         private float damage;
         private float explosionRadius;
         private float elapsedLifetime;
@@ -17,12 +18,18 @@ namespace TankGame.Projectiles
         public int OwnerPlayerIndex { get; private set; } = -1;
         public bool IsInitialized => initialized;
         public bool IsFinished => finished;
+        public float Damage => damage;
+        public float ExplosionRadius => explosionRadius;
+        public float ElapsedLifetime => elapsedLifetime;
+        public float MaximumLifetime => maximumLifetime;
+        public Rigidbody2D Body => body != null ? body : (body = GetComponent<Rigidbody2D>());
 
         public event Action<Projectile> Completed;
 
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
+            impactHandler = GetComponent<IProjectileImpactHandler>();
             ValidateLifetime();
         }
 
@@ -42,6 +49,9 @@ namespace TankGame.Projectiles
 
             if (body == null)
                 body = GetComponent<Rigidbody2D>();
+            if (impactHandler == null)
+                impactHandler = GetComponent<IProjectileImpactHandler>();
+
             OwnerPlayerIndex = ownerPlayerIndex;
             this.damage = damage;
             this.explosionRadius = explosionRadius;
@@ -70,9 +80,22 @@ namespace TankGame.Projectiles
             if (!initialized || finished)
                 return;
 
-            // Set the guard before damage callbacks or deferred destruction can run.
+            if (impactHandler == null)
+                impactHandler = GetComponent<IProjectileImpactHandler>();
+
+            // Delegate to custom impact handler if present
+            if (impactHandler != null)
+            {
+                bool shouldFinish = impactHandler.HandleImpact(this, collision);
+                if (!shouldFinish)
+                    return; // Projectile continues flight/bouncing/burrowing
+            }
+
+            // Standard final explosion & destruction
             finished = true;
-            body.simulated = false;
+            if (body != null)
+                body.simulated = false;
+
             Vector2 impactPosition = collision.contactCount > 0
                 ? collision.GetContact(0).point : (Vector2)transform.position;
             try
@@ -85,15 +108,49 @@ namespace TankGame.Projectiles
             }
         }
 
-        private void CompleteAndDestroy()
+        /// <summary>
+        /// Explicitly processes collision logic (used by automated tests and custom collision dispatchers).
+        /// </summary>
+        public void ProcessCollision(Collision2D collision)
         {
+            OnCollisionEnter2D(collision);
+        }
+
+        /// <summary>
+        /// Manually triggers an explosion at the specified world position using this projectile's damage & radius.
+        /// </summary>
+        public void TriggerExplosion(Vector2 center)
+        {
+            TriggerExplosion(center, damage, explosionRadius);
+        }
+
+        /// <summary>
+        /// Manually triggers an explosion at the specified position with custom damage and radius.
+        /// </summary>
+        public void TriggerExplosion(Vector2 center, float customDamage, float customRadius)
+        {
+            ExplosionDamage.Apply(center, customDamage, customRadius);
+        }
+
+        /// <summary>
+        /// Completes lifecycle events and destroys the projectile game object.
+        /// </summary>
+        public void CompleteAndDestroy()
+        {
+            finished = true;
+            if (body != null)
+                body.simulated = false;
+
             try
             {
                 Completed?.Invoke(this);
             }
             finally
             {
-                Destroy(gameObject);
+                if (Application.isPlaying)
+                    Destroy(gameObject);
+                else
+                    DestroyImmediate(gameObject);
             }
         }
 

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6061231178976202526}
   - component: {fileID: 955298330566187577}
   - component: {fileID: 1567743675706068424}
+  - component: {fileID: 2348910481239840123}
   m_Layer: 0
   m_Name: MockProjectile
   m_TagString: Untagged
@@ -171,3 +172,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Projectiles.Projectile
   maximumLifetime: 10
+--- !u!114 &2348910481239840123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132062985407422002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ca0843cb0e906459b05198e72d005c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Projectiles.ProjectileFlight
+  alignToVelocity: 1
+  rotationOffset: 0
+  turnSpeed: 0
+  minSpeedThreshold: 0.1

@@ -665,8 +665,15 @@ MonoBehaviour:
   bootstrap: {fileID: 687904039}
   playerZeroAim: {fileID: 1487234969}
   playerOneAim: {fileID: 1823342653}
+  playerZeroWeapon: {fileID: 0}
+  playerOneWeapon: {fileID: 0}
   playerZeroMuzzle: {fileID: 223520935}
   playerOneMuzzle: {fileID: 55054704}
+  availableWeapons:
+  - {fileID: 11400000, guid: cabef70869bcebe438ef627c78fe41c1, type: 2}
+  - {fileID: 11400000, guid: 92af71366e35324419278ba3227ea985, type: 2}
+  - {fileID: 11400000, guid: 89029397b93deb24084fa6930fad98b5, type: 2}
+  - {fileID: 11400000, guid: 7ec79b5db4cd056489eae1a6730faf10, type: 2}
   aimRate: 60
   playerOneIsAI: 1
 --- !u!1 &1091336330
