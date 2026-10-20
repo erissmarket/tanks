@@ -17,12 +17,21 @@ namespace TankGame.AI
         [SerializeField] private Transform target = null;
         [SerializeField] private WeaponData weaponData = null;
         [SerializeField, Min(0f)] private float thinkDelay = 0.5f;
-        [SerializeField, Range(0f, 10f)] private float angleErrorRange = 2f;
+        // Retain legacy scene data; the session profile now supplies the shot error.
+        [SerializeField, HideInInspector] private float angleErrorRange = 2f;
         [SerializeField, Range(-180f, 180f)] private float minAimAngle = 10f;
         [SerializeField, Range(-180f, 180f)] private float maxAimAngle = 170f;
         private bool pendingShot;
         private bool firedThisTurn;
         private float fireTime;
+        private AIDifficultyProfile difficultyProfile;
+        public AIDifficulty Difficulty { get; private set; }
+
+        private void Awake()
+        {
+            Difficulty = GameSessionConfiguration.Difficulty;
+            difficultyProfile = AIDifficultyProfile.For(Difficulty);
+        }
 
         private void Start()
         {
@@ -91,10 +100,11 @@ namespace TankGame.AI
                 gameplayActions.Aim(index, angle);
                 if (!CanAct()) return;
             }
-            angle = Mathf.Clamp(angle + UnityEngine.Random.Range(-angleErrorRange, angleErrorRange), minAimAngle, maxAimAngle);
+            angle = difficultyProfile.ApplyAngle(angle, UnityEngine.Random.Range(-1f, 1f), minAimAngle, maxAimAngle);
             gameplayActions.Aim(index, angle);
             if (!CanAct()) return;
-            gameplayActions.Fire(index, (Vector2)muzzle.TransformVector(Vector3.right).normalized);
+            gameplayActions.Fire(index, (Vector2)muzzle.TransformVector(Vector3.right).normalized,
+                difficultyProfile.GetPower(weaponData, UnityEngine.Random.Range(-1f, 1f)));
         }
 
         private float CalculateLocalAimAngle()
@@ -133,11 +143,10 @@ namespace TankGame.AI
         private void ValidateConfiguration()
         {
             if (float.IsNaN(thinkDelay) || float.IsInfinity(thinkDelay)) thinkDelay = 0.5f;
-            if (float.IsNaN(angleErrorRange) || float.IsInfinity(angleErrorRange)) angleErrorRange = 2f;
             if (float.IsNaN(minAimAngle) || float.IsInfinity(minAimAngle)) minAimAngle = 10f;
             if (float.IsNaN(maxAimAngle) || float.IsInfinity(maxAimAngle)) maxAimAngle = 170f;
             thinkDelay = Mathf.Max(0f, thinkDelay);
-            angleErrorRange = Mathf.Clamp(angleErrorRange, 0f, 10f);
+            angleErrorRange = float.IsFinite(angleErrorRange) ? Mathf.Clamp(angleErrorRange, 0f, 10f) : 2f;
             minAimAngle = Mathf.Clamp(minAimAngle, -180f, 180f);
             maxAimAngle = Mathf.Clamp(maxAimAngle, minAimAngle, 180f);
         }

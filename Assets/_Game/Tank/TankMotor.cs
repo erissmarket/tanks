@@ -38,16 +38,12 @@ namespace TankGame.Tank
         /// <summary>Immediately stops driven motion without cancelling a fall.</summary>
         public void Stop()
         {
+            bool wasDriven = Mathf.Abs(moveDirection) > 0.001f;
             moveDirection = 0f;
             if (body == null) body = GetComponent<Rigidbody2D>();
-            if (body == null) return;
+            if (body == null || !wasDriven) return;
             Vector2 velocity = body.linearVelocity;
-            if (IsGrounded)
-            {
-                Vector2 tangent = new Vector2(GroundNormal.y, -GroundNormal.x);
-                velocity -= tangent * Vector2.Dot(velocity, tangent);
-            }
-            else velocity.x = 0f;
+            velocity.x = 0f;
             body.linearVelocity = velocity;
         }
 

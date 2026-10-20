@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace TankGame.Presentation
 {
-    public sealed class IntegratedHoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+    public sealed class IntegratedHoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler, ICancelHandler
     {
         [SerializeField] private IntegratedInput input = null;
         [SerializeField] private int command = 0;
@@ -27,5 +27,9 @@ namespace TankGame.Presentation
             pointers.Clear();
             if (input != null) input.Hold(command, false);
         }
+        public void OnPointerExit(PointerEventData data) => OnPointerUp(data);
+        public void OnCancel(BaseEventData data) => OnDisable();
+        private void OnApplicationFocus(bool focused) { if (!focused) OnDisable(); }
+        private void OnApplicationPause(bool paused) { if (paused) OnDisable(); }
     }
 }

@@ -17,7 +17,10 @@ namespace TankGame.Terrain
         private int width, height;
         private float ppu;
         private Vector2 pivot;
+        private Sprite originalSoilSprite, originalGrassSprite;
+        private Vector2[][] originalColliderPaths;
         public int CraterCount { get; private set; }
+        public event Action<Vector2, float> Carved;
 
         private void Awake() => InitializeSurface();
 
@@ -30,6 +33,14 @@ namespace TankGame.Terrain
             groundCollider = GetComponent<PolygonCollider2D>();
             Sprite source = soilRenderer.sprite;
             if (source == null) throw new InvalidOperationException("Terrain requires a soil sprite.");
+            if (originalColliderPaths == null)
+            {
+                originalSoilSprite = source;
+                originalGrassSprite = grassRenderer != null ? grassRenderer.sprite : null;
+                originalColliderPaths = new Vector2[groundCollider.pathCount][];
+                for (int i = 0; i < originalColliderPaths.Length; i++)
+                    originalColliderPaths[i] = groundCollider.GetPath(i);
+            }
             width = Mathf.RoundToInt(source.rect.width);
             height = Mathf.RoundToInt(source.rect.height);
             pivot = source.pivot;
@@ -109,6 +120,7 @@ namespace TankGame.Terrain
             if (grassTexture != null) { grassTexture.SetPixels32(grassPixels); grassTexture.Apply(false); }
             RebuildCollider();
             CraterCount++;
+            Carved?.Invoke(worldCenter, worldRadius);
             return true;
         }
 
@@ -118,6 +130,23 @@ namespace TankGame.Terrain
             Vector2 local = transform.InverseTransformPoint(new Vector2(worldX, transform.position.y));
             int x = Mathf.Clamp(Mathf.FloorToInt(local.x * ppu + pivot.x), 0, width - 1);
             return transform.TransformPoint(new Vector3(local.x, heights[x], 0f)).y;
+        }
+
+        /// <summary>Restores the authored surface for an explicit match restart.</summary>
+        public void ResetSurface()
+        {
+            if (originalColliderPaths == null) return;
+            soilRenderer.sprite = originalSoilSprite;
+            if (grassRenderer != null) grassRenderer.sprite = originalGrassSprite;
+            groundCollider.pathCount = originalColliderPaths.Length;
+            for (int i = 0; i < originalColliderPaths.Length; i++)
+                groundCollider.SetPath(i, originalColliderPaths[i]);
+            ReleaseRuntimeAssets();
+            heights = null;
+            grassPixels = null;
+            CraterCount = 0;
+            InitializeSurface();
+            Physics2D.SyncTransforms();
         }
 
         private void RebuildCollider()
@@ -161,12 +190,16 @@ namespace TankGame.Terrain
             return result;
         }
 
-        private void OnDestroy()
+        private void OnDestroy() => ReleaseRuntimeAssets();
+
+        private void ReleaseRuntimeAssets()
         {
             if (soilSprite != null) Destroy(soilSprite);
             if (grassSprite != null) Destroy(grassSprite);
             if (soilTexture != null) Destroy(soilTexture);
             if (grassTexture != null) Destroy(grassTexture);
+            soilSprite = grassSprite = null;
+            soilTexture = grassTexture = null;
         }
     }
 }

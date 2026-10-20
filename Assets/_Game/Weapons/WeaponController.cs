@@ -19,6 +19,9 @@ namespace TankGame.Weapons
 
         /// <summary>Launches from a world position along a normalized world direction.</summary>
         public Projectile Fire(int ownerPlayerIndex, Vector2 position, Vector2 direction)
+            => Fire(ownerPlayerIndex, position, direction, currentWeapon != null ? currentWeapon.BaseSpeedPower : 1f);
+
+        public Projectile Fire(int ownerPlayerIndex, Vector2 position, Vector2 direction, float normalizedPower)
         {
             if (ownerPlayerIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(ownerPlayerIndex));
@@ -32,7 +35,7 @@ namespace TankGame.Weapons
             Vector2 launchDirection = direction.normalized;
             float damage = currentWeapon.BaseDamage;
             float radius = currentWeapon.ExplosionRadius;
-            Vector2 velocity = launchDirection * currentWeapon.LaunchSpeed;
+            Vector2 velocity = launchDirection * currentWeapon.GetLaunchSpeed(normalizedPower);
             Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(launchDirection.y, launchDirection.x) * Mathf.Rad2Deg);
             Projectile projectile = Instantiate(currentWeapon.ProjectilePrefab, position, rotation);
             try

@@ -21,8 +21,20 @@ namespace TankGame.Presentation
         private readonly bool[] held = new bool[5];
         private bool moving;
         private int pointerFrame = -1;
+        private GameplayTouchControls controls;
+        private bool focused = true, paused;
 
-        public bool CanAct => isActiveAndEnabled && gameManager.CurrentState == MatchState.TurnActive
+        private void OnEnable()
+        {
+            if (controls == null) controls = gameObject.AddComponent<GameplayTouchControls>();
+            controls.enabled = true;
+            controls.Bind(() => CanAct, value => actions.Move(0, value), StopIfAuthorized,
+                (direction, power) => actions.Aim(0, direction, power), Fire,
+                direction => AimPowerJoystick.Constrain(direction, false, aim.transform.eulerAngles.z),
+                () => aim.WorldAimDirection, () => actions.GetMovementRemaining(0), false);
+        }
+
+        public bool CanAct => isActiveAndEnabled && focused && !paused && gameManager.CurrentState == MatchState.TurnActive
             && turns.CurrentPlayerIndex == 0 && player.CanAct;
         public bool CanRestart => bootstrap.CanRestart;
 
@@ -44,7 +56,7 @@ namespace TankGame.Presentation
             if (!CanAct) return;
             Vector2 tip = barrel.TransformPoint(new Vector3(0.45f, 0f, 0f));
             Vector2 basis = barrel.TransformPoint(new Vector3(-0.45f, 0f, 0f));
-            actions.Fire(0, tip - basis);
+            actions.Fire(0, tip - basis, controls != null ? controls.Power : 1f);
         }
 
         public void Restart()
@@ -75,14 +87,19 @@ namespace TankGame.Presentation
 
         private void Clear()
         {
-            if (moving && CanAct) actions.Stop(0);
+            if (moving) StopIfAuthorized();
             moving = false;
             System.Array.Clear(held, 0, held.Length);
         }
 
-        private void OnDisable() => Clear();
-        private void OnApplicationFocus(bool focus) { if (!focus) Clear(); }
-        private void OnApplicationPause(bool pause) { if (pause) Clear(); }
+        private void OnDisable() { Clear(); if (controls != null) controls.enabled = false; }
+        private void StopIfAuthorized()
+        {
+            if (actions != null && actions.isActiveAndEnabled && gameManager != null && gameManager.CurrentState == MatchState.TurnActive
+                && turns.CurrentPlayerIndex == 0 && player.CanAct) actions.Stop(0);
+        }
+        private void OnApplicationFocus(bool focus) { if (!focus) Clear(); focused = focus; }
+        private void OnApplicationPause(bool pause) { if (pause) Clear(); paused = pause; }
         private void OnValidate()
         {
             if (float.IsNaN(aimRate) || float.IsInfinity(aimRate)) aimRate = 60f;

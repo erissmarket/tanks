@@ -17,6 +17,9 @@ namespace TankGame.Projectiles
         public int OwnerPlayerIndex { get; private set; } = -1;
         public bool IsInitialized => initialized;
         public bool IsFinished => finished;
+        public bool HasImpacted { get; private set; }
+        public Vector2 ImpactPosition { get; private set; }
+        public float ExplosionRadius => explosionRadius;
 
         public event Action<Projectile> Completed;
 
@@ -75,6 +78,8 @@ namespace TankGame.Projectiles
             body.simulated = false;
             Vector2 impactPosition = collision.contactCount > 0
                 ? collision.GetContact(0).point : (Vector2)transform.position;
+            HasImpacted = true;
+            ImpactPosition = impactPosition;
             try
             {
                 ExplosionDamage.Apply(impactPosition, damage, explosionRadius);

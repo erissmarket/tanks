@@ -127,6 +127,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 436426177}
     m_Modifications:
+    - target: {fileID: 527646480115679999, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
+      propertyPath: minAimAngle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1956523670024084646, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
       propertyPath: m_Name
       value: Player1
@@ -142,6 +146,10 @@ PrefabInstance:
     - target: {fileID: 4169992478233334086, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
       propertyPath: m_Color.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8268840141615725777, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
+      propertyPath: m_LocalScale.x
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 8268840141615725777, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
       propertyPath: m_LocalPosition.x
@@ -266,6 +274,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 436426177}
     m_Modifications:
+    - target: {fileID: 527646480115679999, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
+      propertyPath: minAimAngle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1956523670024084646, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
       propertyPath: m_Name
       value: Player0
@@ -515,7 +527,8 @@ MonoBehaviour:
   playerZeroMuzzle: {fileID: 223520935}
   playerOneMuzzle: {fileID: 55054704}
   playerZeroDefaultAim: 45
-  playerOneDefaultAim: 135
+  playerOneDefaultAim: 45
+  terrain: {fileID: 0}
 --- !u!1 &690841744
 GameObject:
   m_ObjectHideFlags: 0
@@ -614,8 +627,8 @@ MonoBehaviour:
   weaponData: {fileID: 11400000, guid: 764a8b59b6b5b084cb596fc3b3a12c5c, type: 2}
   thinkDelay: 0.5
   angleErrorRange: 2
-  minAimAngle: 10
-  maxAimAngle: 170
+  minAimAngle: 0
+  maxAimAngle: 90
 --- !u!1 &874101255
 GameObject:
   m_ObjectHideFlags: 0

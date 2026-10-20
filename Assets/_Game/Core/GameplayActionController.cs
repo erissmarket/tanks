@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace TankGame.Core
 {
+    [DefaultExecutionOrder(-100)]
     public sealed class GameplayActionController : MonoBehaviour
     {
         private sealed class PlayerRegistration
@@ -16,6 +17,10 @@ namespace TankGame.Core
             public TankAim Aim;
             public WeaponController Weapon;
             public Transform Muzzle;
+            public Rigidbody2D Body;
+            public bool Moving;
+            public double MoveExpires;
+            public float LastX, DistanceUsed, Power = 1f;
         }
 
         private readonly PlayerRegistration[] players = new PlayerRegistration[2];
@@ -23,6 +28,13 @@ namespace TankGame.Core
         private TurnManager turnManager;
         private MatchFlowController matchFlow;
         private bool firing;
+        [SerializeField, Min(0f)] private float movementBudget = 3f;
+        [SerializeField, Range(0.1f, 2f)] private float movementLeaseSeconds = 0.35f;
+
+        public float GetMovementRemaining(int playerIndex)
+        { ValidateIndex(playerIndex); return Mathf.Max(0, movementBudget - (players[playerIndex]?.DistanceUsed ?? 0)); }
+        public float GetShotPower(int playerIndex)
+        { ValidateIndex(playerIndex); return players[playerIndex]?.Power ?? 1f; }
 
         public void Initialize(GameManager gameManager, TurnManager turnManager, MatchFlowController matchFlow)
         {
@@ -67,7 +79,8 @@ namespace TankGame.Core
 
             players[playerIndex] = new PlayerRegistration
             {
-                Controller = controller, Motor = motor, Aim = aim, Weapon = weapon, Muzzle = muzzle
+                Controller = controller, Motor = motor, Aim = aim, Weapon = weapon, Muzzle = muzzle,
+                Body = motor.GetComponent<Rigidbody2D>()
             };
         }
 
@@ -75,12 +88,19 @@ namespace TankGame.Core
         {
             PlayerRegistration player = Authorize(playerIndex);
             ValidateFinite(direction, nameof(direction));
+            if (Mathf.Abs(direction) < 0.001f || GetMovementRemaining(playerIndex) <= 0f) { Stop(playerIndex); return; }
+            if (!player.Moving) player.LastX = player.Body.position.x;
+            player.Moving = true;
+            player.MoveExpires = Time.unscaledTimeAsDouble + movementLeaseSeconds;
             player.Motor.Move(direction);
         }
 
         public void Stop(int playerIndex)
         {
-            Authorize(playerIndex).Motor.Stop();
+            var player = Authorize(playerIndex);
+            AccountMovement(player);
+            player.Moving = false;
+            player.Motor.Stop();
         }
 
         public void Aim(int playerIndex, float angle)
@@ -90,19 +110,35 @@ namespace TankGame.Core
             player.Aim.SetAimAngle(angle);
         }
 
+        public void Aim(int playerIndex, Vector2 worldDirection, float normalizedPower)
+        {
+            var player = Authorize(playerIndex);
+            ValidatePower(normalizedPower);
+            player.Aim.SetWorldAimDirection(worldDirection);
+            player.Power = normalizedPower;
+        }
+
         public Projectile Fire(int playerIndex, Vector2 direction)
         {
+            var player = Authorize(playerIndex);
+            return Fire(playerIndex, direction, player.Weapon.CurrentWeapon != null ? player.Weapon.CurrentWeapon.BaseSpeedPower : 1f);
+        }
+
+        public Projectile Fire(int playerIndex, Vector2 direction, float normalizedPower)
+        {
             PlayerRegistration player = Authorize(playerIndex);
+            ValidatePower(normalizedPower);
             firing = true;
             Projectile projectile = null;
             try
             {
                 player.Aim.SetWorldAimDirection(direction);
-                projectile = player.Weapon.Fire(playerIndex, player.Muzzle.position, player.Aim.WorldAimDirection);
+                projectile = player.Weapon.Fire(playerIndex, player.Muzzle.position, player.Aim.WorldAimDirection, normalizedPower);
                 if (projectile == null || !projectile.IsInitialized || projectile.IsFinished
                     || !projectile.isActiveAndEnabled || projectile.OwnerPlayerIndex != playerIndex)
                     throw new InvalidOperationException("Weapon did not create a valid active projectile.");
                 matchFlow.NotifyProjectileFired(projectile);
+                player.Power = normalizedPower;
                 return projectile;
             }
             catch
@@ -167,15 +203,56 @@ namespace TankGame.Core
 
         private void OnStateChanged(MatchState previous, MatchState current)
         {
+            if (current == MatchState.Starting)
+                foreach (var player in players) if (player != null) { player.DistanceUsed = 0f; player.Power = 1f; }
+            if (current == MatchState.TurnActive && turnManager.CurrentPlayerIndex >= 0)
+            {
+                var player = players[turnManager.CurrentPlayerIndex];
+                if (player != null) player.DistanceUsed = 0f;
+            }
             if (current != MatchState.TurnActive)
                 StopRegisteredMotors();
+        }
+
+        private static void ValidatePower(float power)
+        {
+            if (!float.IsFinite(power) || power < 0f || power > 1f)
+                throw new ArgumentOutOfRangeException(nameof(power), "Normalized power must be finite and in [0,1].");
+        }
+
+        private static void AccountMovement(PlayerRegistration player)
+        {
+            if (!player.Moving || player.Body == null) return;
+            float x = player.Body.position.x;
+            player.DistanceUsed += Mathf.Abs(x - player.LastX);
+            player.LastX = x;
+        }
+
+        private void FixedUpdate()
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                var player = players[i];
+                if (player == null || !player.Moving) continue;
+                AccountMovement(player);
+                if (gameManager == null || gameManager.CurrentState != MatchState.TurnActive
+                    || turnManager.CurrentPlayerIndex != i || !player.Controller.CanAct
+                    || Time.unscaledTimeAsDouble >= player.MoveExpires || GetMovementRemaining(i) <= 0f)
+                { player.Moving = false; player.Motor.Stop(); }
+            }
+        }
+
+        private void OnValidate()
+        {
+            movementBudget = float.IsFinite(movementBudget) ? Mathf.Max(0f, movementBudget) : 3f;
+            movementLeaseSeconds = float.IsFinite(movementLeaseSeconds) ? Mathf.Clamp(movementLeaseSeconds, 0.1f, 2f) : 0.35f;
         }
 
         private void StopRegisteredMotors()
         {
             foreach (PlayerRegistration player in players)
                 if (player != null && player.Motor != null)
-                    player.Motor.Stop();
+                { AccountMovement(player); player.Moving = false; player.Motor.Stop(); }
         }
 
         private void OnEnable()

@@ -1,6 +1,7 @@
 using System;
 using TankGame.Core;
 using TankGame.Tank;
+using TankGame.Terrain;
 using TankGame.Weapons;
 using UnityEngine;
 
@@ -18,8 +19,11 @@ namespace TankGame.Testing
         [SerializeField] private Transform playerOneMuzzle = null;
         [SerializeField] private float playerZeroDefaultAim = 45f;
         [SerializeField] private float playerOneDefaultAim = 135f;
+        [SerializeField] private DestructibleTerrain terrain = null;
         private Vector3 playerZeroStartPosition;
         private Vector3 playerOneStartPosition;
+        private float playerZeroStartRotation;
+        private float playerOneStartRotation;
 
         public bool CanRestart => gameManager != null && gameManager.CurrentState == MatchState.MatchEnded;
         public bool CanIssueActions => gameManager != null && gameManager.CurrentState == MatchState.TurnActive;
@@ -32,6 +36,8 @@ namespace TankGame.Testing
 
             playerZeroStartPosition = playerZero.transform.position;
             playerOneStartPosition = playerOne.transform.position;
+            playerZeroStartRotation = playerZero.GetComponent<Rigidbody2D>().rotation;
+            playerOneStartRotation = playerOne.GetComponent<Rigidbody2D>().rotation;
             InitializePlayer(playerZero, 0);
             InitializePlayer(playerOne, 1);
             matchFlow.Initialize(gameManager, turnManager, playerZero, playerOne);
@@ -47,17 +53,19 @@ namespace TankGame.Testing
         {
             if (!CanRestart)
                 throw new InvalidOperationException("Restart BackendTest only after MatchEnded.");
-            RestorePlayer(playerZero, playerZeroStartPosition, playerZeroDefaultAim);
-            RestorePlayer(playerOne, playerOneStartPosition, playerOneDefaultAim);
+            if (terrain != null) terrain.ResetSurface();
+            RestorePlayer(playerZero, playerZeroStartPosition, playerZeroStartRotation, playerZeroDefaultAim);
+            RestorePlayer(playerOne, playerOneStartPosition, playerOneStartRotation, playerOneDefaultAim);
             Physics2D.SyncTransforms();
             matchFlow.StartMatch();
         }
 
-        private static void RestorePlayer(BackendTestPlayerController player, Vector3 position, float angle)
+        private static void RestorePlayer(BackendTestPlayerController player, Vector3 position, float rotation, float angle)
         {
             player.GetComponent<HealthComponent>().ResetHealth();
             Rigidbody2D body = player.GetComponent<Rigidbody2D>();
             body.position = position;
+            body.rotation = rotation;
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
             player.GetComponent<TankAim>().SetAimAngle(angle);

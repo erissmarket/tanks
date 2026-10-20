@@ -11,6 +11,7 @@ namespace TankGame.Presentation
         private Rigidbody2D body;
         private Projectile projectile;
         private bool impactShown;
+        public GameObject ExplosionVisual => explosionVisual;
 
         private void Awake()
         {
