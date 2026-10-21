@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: weapon-cluster
   weaponName: Cluster Bomb
+  icon: {fileID: 21300000, guid: c7814c11c0d332a930ac77d4afdcf6c3, type: 3}
   projectilePrefab: {fileID: 1333586737424247804, guid: 50f0a17bc4a356f4a89bad34d266cd0f, type: 3}
   baseDamage: 25
   launchSpeed: 11

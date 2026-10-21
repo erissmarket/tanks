@@ -1,7 +1,5 @@
-using System;
 using TankGame.Core;
 using TankGame.Data;
-using TankGame.Tank;
 using TankGame.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,15 +11,13 @@ namespace TankGame.Testing
         [SerializeField] private GameplayActionController gameplayActions = null;
         [SerializeField] private TurnManager turnManager = null;
         [SerializeField] private BackendTestBootstrap bootstrap = null;
-        [SerializeField] private TankAim playerZeroAim = null;
-        [SerializeField] private TankAim playerOneAim = null;
+        [SerializeField] private BackendTestPlayerController playerZero = null;
+        [SerializeField] private BackendTestPlayerController playerOne = null;
         [SerializeField] private WeaponController playerZeroWeapon = null;
         [SerializeField] private WeaponController playerOneWeapon = null;
-        [SerializeField] private Transform playerZeroMuzzle = null;
-        [SerializeField] private Transform playerOneMuzzle = null;
         [SerializeField] private WeaponData[] availableWeapons = null;
-        [SerializeField, Min(1f)] private float aimRate = 60f;
-        [SerializeField] private bool playerOneIsAI = false;
+        [SerializeField] private float aimRate = 60f;
+
         private int movingPlayer = -1;
 
         public WeaponData[] AvailableWeapons
@@ -32,16 +28,11 @@ namespace TankGame.Testing
 
         private void Start()
         {
-            if (gameplayActions == null || turnManager == null || bootstrap == null
-                || playerZeroAim == null || playerOneAim == null || playerZeroMuzzle == null || playerOneMuzzle == null)
-                throw new InvalidOperationException("Assign all BackendTestInput references.");
+            if (playerZeroWeapon == null && playerZero != null)
+                playerZeroWeapon = playerZero.GetComponent<WeaponController>();
+            if (playerOneWeapon == null && playerOne != null)
+                playerOneWeapon = playerOne.GetComponent<WeaponController>();
 
-            if (playerZeroWeapon == null)
-                playerZeroWeapon = playerZeroAim.GetComponent<WeaponController>();
-            if (playerOneWeapon == null)
-                playerOneWeapon = playerOneAim.GetComponent<WeaponController>();
-
-            // Equip first weapon by default if available
             if (availableWeapons != null && availableWeapons.Length > 0 && availableWeapons[0] != null)
             {
                 if (playerZeroWeapon != null) playerZeroWeapon.AssignWeapon(availableWeapons[0]);
@@ -51,34 +42,38 @@ namespace TankGame.Testing
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
+            if (bootstrap == null || !bootstrap.CanRestart) return;
+
+            var keyboard = Keyboard.current;
             if (keyboard == null) return;
-            if (bootstrap.CanRestart && keyboard.rKey.wasPressedThisFrame)
+
+            if (keyboard.rKey.wasPressedThisFrame)
             {
-                movingPlayer = -1;
-                bootstrap.RestartTestMatch();
+                bootstrap.RestartMatch();
                 return;
             }
-            if (!bootstrap.CanIssueActions)
-            {
-                movingPlayer = -1;
-                return;
-            }
+
+            if (!bootstrap.CanIssueActions) return;
 
             int index = turnManager.CurrentPlayerIndex;
-            if (playerOneIsAI && index == 1)
-            {
-                movingPlayer = -1;
-                return;
-            }
+            var player = index == 0 ? playerZero : playerOne;
+            if (player == null || !player.CanAct) return;
 
-            // Weapon switching with numeric keys 1, 2, 3, 4
-            CheckWeaponSwitch(index, keyboard);
+            if (keyboard.digit1Key.wasPressedThisFrame) SelectWeapon(index, 0);
+            else if (keyboard.digit2Key.wasPressedThisFrame) SelectWeapon(index, 1);
+            else if (keyboard.digit3Key.wasPressedThisFrame) SelectWeapon(index, 2);
+            else if (keyboard.digit4Key.wasPressedThisFrame) SelectWeapon(index, 3);
+            else if (keyboard.digit5Key.wasPressedThisFrame) SelectWeapon(index, 4);
+            else if (keyboard.digit6Key.wasPressedThisFrame) SelectWeapon(index, 5);
+            else if (keyboard.digit7Key.wasPressedThisFrame) SelectWeapon(index, 6);
 
-            float movement = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
-            if (movement != 0f)
+            float move = 0f;
+            if (keyboard.dKey.isPressed) move += 1f;
+            if (keyboard.aKey.isPressed) move -= 1f;
+
+            if (move != 0f)
             {
-                gameplayActions.Move(index, movement);
+                gameplayActions.Move(index, move);
                 movingPlayer = index;
             }
             else if (movingPlayer == index)
@@ -87,34 +82,19 @@ namespace TankGame.Testing
                 movingPlayer = -1;
             }
 
-            float aimInput = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
-            if (aimInput != 0f)
+            float elevation = 0f;
+            if (keyboard.wKey.isPressed) elevation += 1f;
+            if (keyboard.sKey.isPressed) elevation -= 1f;
+
+            if (elevation != 0f)
             {
-                TankAim aim = index == 0 ? playerZeroAim : playerOneAim;
-                gameplayActions.Aim(index, aim.CurrentAimAngle + aimInput * aimRate * Time.deltaTime);
+                float nextAim = player.CurrentAimAngle + elevation * aimRate * Time.deltaTime;
+                gameplayActions.Aim(index, nextAim);
             }
+
             if (keyboard.spaceKey.wasPressedThisFrame)
             {
-                Transform muzzle = index == 0 ? playerZeroMuzzle : playerOneMuzzle;
-                Vector2 direction = muzzle.TransformVector(Vector3.right).normalized;
-                gameplayActions.Fire(index, direction);
-                movingPlayer = -1;
-            }
-        }
-
-        private void CheckWeaponSwitch(int playerIndex, Keyboard keyboard)
-        {
-            if (availableWeapons == null || availableWeapons.Length == 0) return;
-
-            int selectedSlot = -1;
-            if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) selectedSlot = 0;
-            else if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) selectedSlot = 1;
-            else if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) selectedSlot = 2;
-            else if (keyboard.digit4Key.wasPressedThisFrame || keyboard.numpad4Key.wasPressedThisFrame) selectedSlot = 3;
-
-            if (selectedSlot >= 0 && selectedSlot < availableWeapons.Length && availableWeapons[selectedSlot] != null)
-            {
-                SelectWeapon(playerIndex, selectedSlot);
+                gameplayActions.Fire(index);
             }
         }
 
@@ -137,13 +117,23 @@ namespace TankGame.Testing
 
             int index = turnManager.CurrentPlayerIndex;
             WeaponController weaponCtrl = index == 0 ? playerZeroWeapon : playerOneWeapon;
-            string currentWeaponName = weaponCtrl != null && weaponCtrl.CurrentWeapon != null
-                ? weaponCtrl.CurrentWeapon.WeaponName : "None";
+            var currentWeapon = weaponCtrl != null ? weaponCtrl.CurrentWeapon : null;
+            string currentWeaponName = currentWeapon != null ? currentWeapon.WeaponName : "None";
+            Sprite currentWeaponIcon = currentWeapon != null ? currentWeapon.Icon : null;
+
+            GUI.color = new Color(0.05f, 0.08f, 0.12f, 0.85f);
+            GUI.Box(new Rect(10, 10, 480, 85), GUIContent.none);
+
+            if (currentWeaponIcon != null && currentWeaponIcon.texture != null)
+            {
+                GUI.color = Color.white;
+                GUI.DrawTexture(new Rect(20, 18, 70, 70), currentWeaponIcon.texture, ScaleMode.ScaleToFit);
+            }
 
             GUI.color = Color.white;
-            GUILayout.BeginArea(new Rect(10, 10, 360, 115), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(100, 15, 380, 75));
             GUILayout.Label($"<b>Turn:</b> Player {index + 1} | <b>Active Weapon:</b> <color=#FFA726>{currentWeaponName}</color>");
-            GUILayout.Label("<size=11><b>Switch Weapon:</b> [1] Rocket | [2] Heavy Mortar | [3] Railgun | [4] Floater</size>");
+            GUILayout.Label("<size=11><b>Keys [1-7]:</b> Rocket | Mortar | Railgun | Floater | Bouncy | Cluster | Digger</size>");
             GUILayout.Label("<size=11><b>Controls:</b> [A/D] Move | [W/S] Aim | [Space] Fire | [R] Restart Match</size>");
             GUILayout.EndArea();
         }

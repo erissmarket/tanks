@@ -8,6 +8,7 @@ namespace TankGame.Data
     {
         [SerializeField] private string weaponId = "";
         [SerializeField] private string weaponName = "";
+        [SerializeField] private Sprite icon = null;
         [SerializeField] private Projectile projectilePrefab = null;
         [SerializeField, Min(0f)] private float baseDamage = 10f;
         [SerializeField, Min(0f)] private float launchSpeed = 10f;
@@ -15,6 +16,7 @@ namespace TankGame.Data
 
         public string WeaponId => weaponId;
         public string WeaponName => weaponName;
+        public Sprite Icon => icon;
         public Projectile ProjectilePrefab => projectilePrefab;
         public float BaseDamage => baseDamage;
         public float LaunchSpeed => launchSpeed;

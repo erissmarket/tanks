@@ -61,60 +61,55 @@ namespace TankGame.Presentation
             if (weaponController != null)
             {
                 weaponController.AssignWeapon(availableWeapons[index]);
-                Debug.Log($"[MVP Weapon Switch] Selected: {availableWeapons[index].WeaponName}");
+                Debug.Log($"[IntegratedInput] Switched to weapon: {availableWeapons[index].WeaponName}");
             }
         }
 
-        public void Hold(int command, bool pressed)
+        public void MoveLeft(bool down)  => SetHeld(0, down);
+        public void MoveRight(bool down) => SetHeld(1, down);
+        public void AimUp(bool down)     => SetHeld(2, down);
+        public void AimDown(bool down)   => SetHeld(3, down);
+        public void Fire()               => SetHeld(4, true);
+
+        private void SetHeld(int index, bool down)
         {
-            if (command < 0 || command >= held.Length) throw new System.ArgumentOutOfRangeException(nameof(command));
+            if (index < 0 || index >= held.Length) return;
+            held[index] = down;
             pointerFrame = Time.frameCount;
-            held[command] = pressed && CanAct;
-            if (!pressed && command < 2 && moving)
+            if (index == 4 && down && CanAct)
             {
-                if (CanAct) actions.Stop(0);
-                moving = false;
+                held[4] = false;
+                actions.Fire(0);
             }
-        }
-
-        public void Fire()
-        {
-            pointerFrame = Time.frameCount;
-            if (!CanAct) return;
-            Vector2 tip = barrel.TransformPoint(new Vector3(0.45f, 0f, 0f));
-            Vector2 basis = barrel.TransformPoint(new Vector3(-0.45f, 0f, 0f));
-            actions.Fire(0, tip - basis);
-        }
-
-        public void Restart()
-        {
-            pointerFrame = Time.frameCount;
-            if (CanRestart) bootstrap.RestartTestMatch();
         }
 
         private void Update()
         {
-            foreach (Button button in holdButtons) button.interactable = CanAct;
-            Keyboard keyboard = Application.isEditor ? Keyboard.current : null;
-            bool pointer = System.Array.Exists(held, value => value) || pointerFrame == Time.frameCount;
-            if (CanRestart && keyboard != null && !pointer && keyboard.rKey.wasPressedThisFrame) { Restart(); return; }
-            if (!CanAct) { Clear(); return; }
-
-            // Weapon switching with numeric keys 1 to 7
-            if (keyboard != null && availableWeapons != null && availableWeapons.Length > 0)
+            if (bootstrap.CanRestart && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
             {
-                for (int i = 0; i < Mathf.Min(availableWeapons.Length, 7); i++)
-                {
-                    Key digitKey = Key.Digit1 + i;
-                    Key numpadKey = Key.Numpad1 + i;
-                    if (keyboard[digitKey].wasPressedThisFrame || keyboard[numpadKey].wasPressedThisFrame)
-                    {
-                        SelectWeapon(i);
-                        break;
-                    }
-                }
+                bootstrap.RestartMatch();
+                return;
             }
 
+            var keyboard = Keyboard.current;
+            if (keyboard != null && CanAct)
+            {
+                if (keyboard.digit1Key.wasPressedThisFrame) SelectWeapon(0);
+                else if (keyboard.digit2Key.wasPressedThisFrame) SelectWeapon(1);
+                else if (keyboard.digit3Key.wasPressedThisFrame) SelectWeapon(2);
+                else if (keyboard.digit4Key.wasPressedThisFrame) SelectWeapon(3);
+                else if (keyboard.digit5Key.wasPressedThisFrame) SelectWeapon(4);
+                else if (keyboard.digit6Key.wasPressedThisFrame) SelectWeapon(5);
+                else if (keyboard.digit7Key.wasPressedThisFrame) SelectWeapon(6);
+            }
+
+            if (!CanAct)
+            {
+                Clear();
+                return;
+            }
+
+            bool pointer = Time.frameCount == pointerFrame;
             float move = (held[1] ? 1f : 0f) - (held[0] ? 1f : 0f);
             float elevation = (held[2] ? 1f : 0f) - (held[3] ? 1f : 0f);
             if (keyboard != null && !pointer)
@@ -132,14 +127,21 @@ namespace TankGame.Presentation
         {
             if (turns == null || player == null) return;
 
-            string weaponName = weaponController != null && weaponController.CurrentWeapon != null
-                ? weaponController.CurrentWeapon.WeaponName : "Standard";
+            var currentWeapon = weaponController != null ? weaponController.CurrentWeapon : null;
+            string weaponName = currentWeapon != null ? currentWeapon.WeaponName : "Standard";
+            Sprite weaponIcon = currentWeapon != null ? currentWeapon.Icon : null;
 
-            GUI.color = new Color(0f, 0f, 0f, 0.75f);
-            GUI.Box(new Rect(15, 15, 420, 75), GUIContent.none);
+            GUI.color = new Color(0.05f, 0.08f, 0.12f, 0.85f);
+            GUI.Box(new Rect(15, 15, 480, 85), GUIContent.none);
+
+            if (weaponIcon != null && weaponIcon.texture != null)
+            {
+                GUI.color = Color.white;
+                GUI.DrawTexture(new Rect(25, 22, 70, 70), weaponIcon.texture, ScaleMode.ScaleToFit);
+            }
 
             GUI.color = Color.white;
-            GUILayout.BeginArea(new Rect(25, 20, 400, 65));
+            GUILayout.BeginArea(new Rect(105, 20, 380, 75));
             GUILayout.Label($"<b>Weapon:</b> <color=#FFA726>{weaponName}</color> | <b>Turn:</b> Player {turns.CurrentPlayerIndex + 1}");
             GUILayout.Label("<size=11><b>Keys [1-7]:</b> Rocket | Mortar | Railgun | Floater | Bouncy | Cluster | Digger</size>");
             GUILayout.Label("<size=11><b>Controls:</b> [A/D] Move | [W/S] Aim | [Space] Fire | [R] Restart</size>");

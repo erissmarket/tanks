@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: weapon-bouncy
   weaponName: Bouncy Shell
+  icon: {fileID: 21300000, guid: fdb0673733df85accb42cdd5774924f5, type: 3}
   projectilePrefab: {fileID: 5654091303384761327, guid: a4daa9499ca3f1c40ba4043886064fdf, type: 3}
   baseDamage: 35
   launchSpeed: 12
