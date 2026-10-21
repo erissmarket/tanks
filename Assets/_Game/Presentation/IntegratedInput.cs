@@ -1,6 +1,8 @@
 using TankGame.Core;
+using TankGame.Data;
 using TankGame.Tank;
 using TankGame.Testing;
+using TankGame.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -18,6 +20,9 @@ namespace TankGame.Presentation
         [SerializeField] private Transform barrel = null;
         [SerializeField] private float aimRate = 60f;
         [SerializeField] private Button[] holdButtons = null;
+        [SerializeField] private WeaponData[] availableWeapons = null;
+        [SerializeField] private WeaponController weaponController = null;
+
         private readonly bool[] held = new bool[5];
         private bool moving;
         private int pointerFrame = -1;
@@ -25,6 +30,40 @@ namespace TankGame.Presentation
         public bool CanAct => isActiveAndEnabled && gameManager.CurrentState == MatchState.TurnActive
             && turns.CurrentPlayerIndex == 0 && player.CanAct;
         public bool CanRestart => bootstrap.CanRestart;
+
+        public WeaponData[] AvailableWeapons
+        {
+            get => availableWeapons;
+            set => availableWeapons = value;
+        }
+
+        private void Start()
+        {
+            if (weaponController == null && player != null)
+                weaponController = player.GetComponent<WeaponController>();
+
+            // Assign first weapon by default if configured
+            if (availableWeapons != null && availableWeapons.Length > 0 && availableWeapons[0] != null)
+            {
+                if (weaponController != null)
+                    weaponController.AssignWeapon(availableWeapons[0]);
+            }
+        }
+
+        public void SelectWeapon(int index)
+        {
+            if (availableWeapons == null || index < 0 || index >= availableWeapons.Length || availableWeapons[index] == null)
+                return;
+
+            if (weaponController == null && player != null)
+                weaponController = player.GetComponent<WeaponController>();
+
+            if (weaponController != null)
+            {
+                weaponController.AssignWeapon(availableWeapons[index]);
+                Debug.Log($"[MVP Weapon Switch] Selected: {availableWeapons[index].WeaponName}");
+            }
+        }
 
         public void Hold(int command, bool pressed)
         {
@@ -60,6 +99,22 @@ namespace TankGame.Presentation
             bool pointer = System.Array.Exists(held, value => value) || pointerFrame == Time.frameCount;
             if (CanRestart && keyboard != null && !pointer && keyboard.rKey.wasPressedThisFrame) { Restart(); return; }
             if (!CanAct) { Clear(); return; }
+
+            // Weapon switching with numeric keys 1 to 7
+            if (keyboard != null && availableWeapons != null && availableWeapons.Length > 0)
+            {
+                for (int i = 0; i < Mathf.Min(availableWeapons.Length, 7); i++)
+                {
+                    Key digitKey = Key.Digit1 + i;
+                    Key numpadKey = Key.Numpad1 + i;
+                    if (keyboard[digitKey].wasPressedThisFrame || keyboard[numpadKey].wasPressedThisFrame)
+                    {
+                        SelectWeapon(i);
+                        break;
+                    }
+                }
+            }
+
             float move = (held[1] ? 1f : 0f) - (held[0] ? 1f : 0f);
             float elevation = (held[2] ? 1f : 0f) - (held[3] ? 1f : 0f);
             if (keyboard != null && !pointer)
@@ -71,6 +126,24 @@ namespace TankGame.Presentation
             else if (moving) { actions.Stop(0); moving = false; }
             if (elevation != 0f) actions.Aim(0, aim.CurrentAimAngle + elevation * aimRate * Time.deltaTime);
             if (keyboard != null && !pointer && keyboard.spaceKey.wasPressedThisFrame) Fire();
+        }
+
+        private void OnGUI()
+        {
+            if (turns == null || player == null) return;
+
+            string weaponName = weaponController != null && weaponController.CurrentWeapon != null
+                ? weaponController.CurrentWeapon.WeaponName : "Standard";
+
+            GUI.color = new Color(0f, 0f, 0f, 0.75f);
+            GUI.Box(new Rect(15, 15, 420, 75), GUIContent.none);
+
+            GUI.color = Color.white;
+            GUILayout.BeginArea(new Rect(25, 20, 400, 65));
+            GUILayout.Label($"<b>Weapon:</b> <color=#FFA726>{weaponName}</color> | <b>Turn:</b> Player {turns.CurrentPlayerIndex + 1}");
+            GUILayout.Label("<size=11><b>Keys [1-7]:</b> Rocket | Mortar | Railgun | Floater | Bouncy | Cluster | Digger</size>");
+            GUILayout.Label("<size=11><b>Controls:</b> [A/D] Move | [W/S] Aim | [Space] Fire | [R] Restart</size>");
+            GUILayout.EndArea();
         }
 
         private void Clear()

@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 955298330566187577}
   - component: {fileID: 1567743675706068424}
   - component: {fileID: 619771788620453438}
+  - component: {fileID: 8192301824719283741}
   m_Layer: 0
   m_Name: IntegratedProjectile
   m_TagString: Untagged
@@ -249,3 +250,30 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7519604347475279044, guid: d2a03d8ab39f38441b3898a935042895, type: 3}
   m_PrefabInstance: {fileID: 224180135457921625}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8192301824719283741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132062985407422002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ca0843cb0e906459b05198e72d005c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Projectiles.ProjectileFlight
+  alignToVelocity: 1
+  rotationOffset: 0
+  turnSpeed: 0
+  minSpeedThreshold: 0.1
+  overrideGravity: 0
+  customGravityScale: 1
+  overrideDrag: 0
+  customLinearDamping: 0
+  enableRocketThrust: 0
+  thrustDelay: 0.2
+  thrustAcceleration: 15
+  maxSpeed: 30
+  enableAirburst: 0
+  airburstTime: 1.5
+  triggerOnApex: 0

@@ -3006,6 +3006,15 @@ MonoBehaviour:
   - {fileID: 1578179740}
   - {fileID: 483550080}
   - {fileID: 2120250776}
+  availableWeapons:
+  - {fileID: 11400000, guid: cabef70869bcebe438ef627c78fe41c1, type: 2}
+  - {fileID: 11400000, guid: 92af71366e35324419278ba3227ea985, type: 2}
+  - {fileID: 11400000, guid: 89029397b93deb24084fa6930fad98b5, type: 2}
+  - {fileID: 11400000, guid: 7ec79b5db4cd056489eae1a6730faf10, type: 2}
+  - {fileID: 11400000, guid: 36687fda9a76dbd4cb5e0e235927c898, type: 2}
+  - {fileID: 11400000, guid: 7bbb12419588b2346954be30379a622a, type: 2}
+  - {fileID: 11400000, guid: 09fa4789a10d70b44860d5aec0f0b1f0, type: 2}
+  weaponController: {fileID: 0}
 --- !u!1 &1206271529
 GameObject:
   m_ObjectHideFlags: 0
