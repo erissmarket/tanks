@@ -336,6 +336,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d77f0756e6a65e64cb9c842c16729b81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Testing.BackendTestPlayerController
+--- !u!114 &223520937 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9095673119330416512, guid: 56a31583784a7004ab9aed9dcbaa8177, type: 3}
+  m_PrefabInstance: {fileID: 223520933}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36a1daa9a8454958aff0fd3a967b9f30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Weapons.WeaponController
 --- !u!1 &262994191
 GameObject:
   m_ObjectHideFlags: 0
@@ -674,6 +685,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 92af71366e35324419278ba3227ea985, type: 2}
   - {fileID: 11400000, guid: 89029397b93deb24084fa6930fad98b5, type: 2}
   - {fileID: 11400000, guid: 7ec79b5db4cd056489eae1a6730faf10, type: 2}
+  - {fileID: 11400000, guid: 36687fda9a76dbd4cb5e0e235927c898, type: 2}
+  - {fileID: 11400000, guid: 7bbb12419588b2346954be30379a622a, type: 2}
+  - {fileID: 11400000, guid: 09fa4789a10d70b44860d5aec0f0b1f0, type: 2}
   aimRate: 60
   playerOneIsAI: 1
 --- !u!1 &1091336330
@@ -685,6 +699,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1091336331}
+  - component: {fileID: 1091336332}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -715,6 +730,34 @@ Transform:
   - {fileID: 732972018}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1091336332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091336330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6daa1b556e3fa24f95c4b1beef0bd4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Testing.ProjectileShowcaseAutomator
+  gameplayActions: {fileID: 690841745}
+  turnManager: {fileID: 1302739950}
+  bootstrap: {fileID: 687904039}
+  playerZeroAim: {fileID: 1487234969}
+  playerZeroMuzzle: {fileID: 223520935}
+  playerZeroWeapon: {fileID: 223520937}
+  showcaseWeapons:
+  - {fileID: 11400000, guid: cabef70869bcebe438ef627c78fe41c1, type: 2}
+  - {fileID: 11400000, guid: 92af71366e35324419278ba3227ea985, type: 2}
+  - {fileID: 11400000, guid: 89029397b93deb24084fa6930fad98b5, type: 2}
+  - {fileID: 11400000, guid: 7ec79b5db4cd056489eae1a6730faf10, type: 2}
+  - {fileID: 11400000, guid: 36687fda9a76dbd4cb5e0e235927c898, type: 2}
+  - {fileID: 11400000, guid: 7bbb12419588b2346954be30379a622a, type: 2}
+  - {fileID: 11400000, guid: 09fa4789a10d70b44860d5aec0f0b1f0, type: 2}
+  autoStart: 1
+  postShotWaitTime: 2
 --- !u!1 &1302739949
 GameObject:
   m_ObjectHideFlags: 0
