@@ -61,55 +61,60 @@ namespace TankGame.Presentation
             if (weaponController != null)
             {
                 weaponController.AssignWeapon(availableWeapons[index]);
-                Debug.Log($"[IntegratedInput] Switched to weapon: {availableWeapons[index].WeaponName}");
+                Debug.Log($"[MVP Weapon Switch] Selected: {availableWeapons[index].WeaponName}");
             }
         }
 
-        public void MoveLeft(bool down)  => SetHeld(0, down);
-        public void MoveRight(bool down) => SetHeld(1, down);
-        public void AimUp(bool down)     => SetHeld(2, down);
-        public void AimDown(bool down)   => SetHeld(3, down);
-        public void Fire()               => SetHeld(4, true);
-
-        private void SetHeld(int index, bool down)
+        public void Hold(int command, bool pressed)
         {
-            if (index < 0 || index >= held.Length) return;
-            held[index] = down;
+            if (command < 0 || command >= held.Length) throw new System.ArgumentOutOfRangeException(nameof(command));
             pointerFrame = Time.frameCount;
-            if (index == 4 && down && CanAct)
+            held[command] = pressed && CanAct;
+            if (!pressed && command < 2 && moving)
             {
-                held[4] = false;
-                actions.Fire(0);
+                if (CanAct) actions.Stop(0);
+                moving = false;
             }
+        }
+
+        public void Fire()
+        {
+            pointerFrame = Time.frameCount;
+            if (!CanAct) return;
+            Vector2 tip = barrel.TransformPoint(new Vector3(0.45f, 0f, 0f));
+            Vector2 basis = barrel.TransformPoint(new Vector3(-0.45f, 0f, 0f));
+            actions.Fire(0, tip - basis);
+        }
+
+        public void Restart()
+        {
+            pointerFrame = Time.frameCount;
+            if (CanRestart) bootstrap.RestartTestMatch();
         }
 
         private void Update()
         {
-            if (bootstrap.CanRestart && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+            foreach (Button button in holdButtons) button.interactable = CanAct;
+            Keyboard keyboard = Application.isEditor ? Keyboard.current : null;
+            bool pointer = System.Array.Exists(held, value => value) || pointerFrame == Time.frameCount;
+            if (CanRestart && keyboard != null && !pointer && keyboard.rKey.wasPressedThisFrame) { Restart(); return; }
+            if (!CanAct) { Clear(); return; }
+
+            // Weapon switching with numeric keys 1 to 7
+            if (keyboard != null && availableWeapons != null && availableWeapons.Length > 0)
             {
-                bootstrap.RestartMatch();
-                return;
+                for (int i = 0; i < Mathf.Min(availableWeapons.Length, 7); i++)
+                {
+                    Key digitKey = Key.Digit1 + i;
+                    Key numpadKey = Key.Numpad1 + i;
+                    if (keyboard[digitKey].wasPressedThisFrame || keyboard[numpadKey].wasPressedThisFrame)
+                    {
+                        SelectWeapon(i);
+                        break;
+                    }
+                }
             }
 
-            var keyboard = Keyboard.current;
-            if (keyboard != null && CanAct)
-            {
-                if (keyboard.digit1Key.wasPressedThisFrame) SelectWeapon(0);
-                else if (keyboard.digit2Key.wasPressedThisFrame) SelectWeapon(1);
-                else if (keyboard.digit3Key.wasPressedThisFrame) SelectWeapon(2);
-                else if (keyboard.digit4Key.wasPressedThisFrame) SelectWeapon(3);
-                else if (keyboard.digit5Key.wasPressedThisFrame) SelectWeapon(4);
-                else if (keyboard.digit6Key.wasPressedThisFrame) SelectWeapon(5);
-                else if (keyboard.digit7Key.wasPressedThisFrame) SelectWeapon(6);
-            }
-
-            if (!CanAct)
-            {
-                Clear();
-                return;
-            }
-
-            bool pointer = Time.frameCount == pointerFrame;
             float move = (held[1] ? 1f : 0f) - (held[0] ? 1f : 0f);
             float elevation = (held[2] ? 1f : 0f) - (held[3] ? 1f : 0f);
             if (keyboard != null && !pointer)
