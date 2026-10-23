@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 725c804f2ec55814294bb62750891d20, type: 3}
+  m_Name: Snowfield
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Terrain.TerrainThemeDefinition
+  displayName: SNOW
+  soil: {fileID: 21300000, guid: dae67779d9301e642a4da684203b4a69, type: 3}
+  surface: {fileID: 21300000, guid: 6b5d6db429f415d43a93b58d5eed42ce, type: 3}
+  skyTint: {r: 0.74, g: 0.85, b: 0.94, a: 1}
+  farMountainTint: {r: 1.19, g: 1.2, b: 1.2, a: 1}
+  nearMountainTint: {r: 1.1, g: 1.12, b: 1.15, a: 1}
+  accentColor: {r: 0.2, g: 0.5, b: 0.67, a: 1}

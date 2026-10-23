@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 725c804f2ec55814294bb62750891d20, type: 3}
+  m_Name: Grassland
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Terrain.TerrainThemeDefinition
+  displayName: GRASS
+  soil: {fileID: 21300000, guid: e91b636a989dc6c4ea1a14c91cf45229, type: 3}
+  surface: {fileID: 21300000, guid: 921085c620e76f34e9e258833156269d, type: 3}
+  skyTint: {r: 0.74509805, g: 0.85882354, b: 0.9137255, a: 1}
+  farMountainTint: {r: 1, g: 1, b: 1, a: 1}
+  nearMountainTint: {r: 1, g: 1, b: 1, a: 1}
+  accentColor: {r: 0.26, g: 0.57, b: 0.23, a: 1}

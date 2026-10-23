@@ -14,6 +14,7 @@ namespace TankGame.Terrain
         private Sprite soilSprite, grassSprite;
         private Color32[] soilPixels, grassPixels;
         private float[] heights;
+        private float[] scorchAmounts;
         private int width, height;
         private float ppu;
         private Vector2 pivot;
@@ -48,6 +49,7 @@ namespace TankGame.Terrain
                 grassRenderer.sprite = grassSprite;
             }
             heights = new float[width];
+            scorchAmounts = new float[width * height];
             for (int x = 0; x < width; x++)
             {
                 int y = height - 1;
@@ -100,6 +102,7 @@ namespace TankGame.Terrain
                     float band = scorchWidth / Mathf.Min(rx, ry);
                     if (distance > 1f + band) continue;
                     float amount = 0.85f * Mathf.Clamp01((1f + band - distance) / Mathf.Max(band, 0.001f));
+                    scorchAmounts[index] = 1f - (1f - scorchAmounts[index]) * (1f - amount);
                     soilPixels[index] = Color32.Lerp(soilPixels[index], new Color32(12, 10, 9, 255), amount);
                     if (grassPixels != null && grassPixels[index].a > 0)
                         grassPixels[index] = Color32.Lerp(grassPixels[index], new Color32(18, 15, 10, 255), amount);
@@ -118,6 +121,42 @@ namespace TankGame.Terrain
             Vector2 local = transform.InverseTransformPoint(new Vector2(worldX, transform.position.y));
             int x = Mathf.Clamp(Mathf.FloorToInt(local.x * ppu + pivot.x), 0, width - 1);
             return transform.TransformPoint(new Vector3(local.x, heights[x], 0f)).y;
+        }
+
+        /// <summary>Changes the map palette without resetting craters, scorch marks or collision.</summary>
+        public void ApplyAppearance(Sprite soil, Sprite surface)
+        {
+            if (soil == null || surface == null) throw new ArgumentNullException(nameof(soil));
+            InitializeSurface();
+            if ((int)soil.rect.width != width || (int)soil.rect.height != height
+                || (int)surface.rect.width != width || (int)surface.rect.height != height
+                || Mathf.Abs(soil.pixelsPerUnit - ppu) > 0.001f || Mathf.Abs(surface.pixelsPerUnit - ppu) > 0.001f
+                || (soil.pivot - pivot).sqrMagnitude > 0.001f || (surface.pivot - pivot).sqrMagnitude > 0.001f)
+                throw new InvalidOperationException("Terrain themes must share dimensions, PPU and pivots.");
+            var sourceSoil = CopySpriteTexture(soil);
+            var sourceSurface = CopySpriteTexture(surface);
+            try
+            {
+                var newSoil = sourceSoil.GetPixels32();
+                var newSurface = sourceSurface.GetPixels32();
+                // Keep exactly the same occupancy mask. Theme changes cannot refill a hole.
+                for (int i = 0; i < soilPixels.Length; i++)
+                {
+                    byte alpha = soilPixels[i].a;
+                    soilPixels[i] = Color32.Lerp(newSoil[i], new Color32(12, 10, 9, 255), scorchAmounts[i]);
+                    soilPixels[i].a = alpha;
+                    if (grassPixels != null)
+                    {
+                        byte surfaceAlpha = grassPixels[i].a;
+                        grassPixels[i] = Color32.Lerp(newSurface[i], new Color32(18, 15, 10, 255), scorchAmounts[i]);
+                        grassPixels[i].a = surfaceAlpha;
+                    }
+                }
+                soilTexture.SetPixels32(soilPixels);
+                soilTexture.Apply(false);
+                if (grassTexture != null) { grassTexture.SetPixels32(grassPixels); grassTexture.Apply(false); }
+            }
+            finally { Destroy(sourceSoil); Destroy(sourceSurface); }
         }
 
         private void RebuildCollider()
