@@ -14,7 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: basic-shell
   weaponName: Basic Shell
+  icon: {fileID: 0}
   projectilePrefab: {fileID: 1567743675706068424, guid: 98d16ba1fdb614746aaecf2908e2e19e, type: 3}
-  baseDamage: 35
+  baseDamage: 32
   launchSpeed: 12
-  explosionRadius: 2
+  explosionRadius: 1.5
+  ammunition: -1
+  minimumDamageFraction: 0.35
+  shieldPenetration: 0

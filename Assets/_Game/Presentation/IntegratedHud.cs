@@ -40,7 +40,7 @@ namespace TankGame.Presentation
         {
             UpdateHealth(playerHealth, playerFill, playerLabel, "PLAYER");
             UpdateHealth(enemyHealth, enemyFill, enemyLabel, "ENEMY");
-            fire.interactable = input.CanAct;
+            fire.interactable = input.CanFire;
             restart.interactable = input.CanRestart;
             if (gameManager.CurrentState == MatchState.MatchEnded)
                 turnLabel.text = matchFlow.FinalResult == null ? "MATCH ENDED" : matchFlow.FinalResult.IsDraw
@@ -54,7 +54,7 @@ namespace TankGame.Presentation
         {
             float fraction = health.MaxHealth > 0f ? Mathf.Clamp01(health.CurrentHealth / health.MaxHealth) : 0f;
             fill.fillAmount = fraction;
-            label.text = prefix + " " + Mathf.RoundToInt(fraction * 100f) + "%";
+            label.text = $"{prefix} {Mathf.CeilToInt(health.CurrentHealth)}/{health.MaxHealth:0}";
         }
     }
 }

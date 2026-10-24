@@ -1,0 +1,6 @@
+Succeeded
+Output: D:/tank/tanks/Builds/Windows/TankBattle.exe
+Size: 152845294
+Duration: 00:05:24.8501042
+Errors: 0
+Warnings: 486

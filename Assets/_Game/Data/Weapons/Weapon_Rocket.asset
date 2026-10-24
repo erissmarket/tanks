@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: weapon-rocket
   weaponName: Rocket Missile
+  description: Reliable, unlimited shots.
   icon: {fileID: 21300000, guid: a329afbd484452a11e107eb1b481206a, type: 3}
   projectilePrefab: {fileID: 4260502480722100435, guid: 99086d205c5dddd4c86fb9d059a839c0, type: 3}
-  baseDamage: 45
+  baseDamage: 32
   launchSpeed: 10
-  explosionRadius: 2.2
+  explosionRadius: 1.5
+  ammunition: -1
+  minimumDamageFraction: 0.35
+  shieldPenetration: 0

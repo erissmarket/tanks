@@ -1,0 +1,20 @@
+PASS 30-second timeout passes turn and replenishes movement
+PASS one root shot; children block turn advancement; completion idempotent
+PASS 15-second watchdog cancels every member without extra damage
+PASS two deaths in different ticks of one shot produce draw
+PASS score example: 70 effective damage + win + 60% survival = 200
+PASS self damage earns no score; overkill awards only actual health removed
+PASS turn cap compares normalized health
+PASS equal health at turn limit draws
+PASS fall below -8 eliminates tank
+PASS pause freezes timer and controls; resume preserves remaining time
+PASS surrender gives loss and zero score; result emitted once
+PASS technical cancellation has no win or score
+PASS rematch resets score, timer, turn and movement
+PASS physics movement budget stops at 3 units and does not refill on reversing
+PASS falling without movement does not consume budget
+PASS terrain reset restores geometry, crater count and current theme
+PASS final scores stay frozen after later health changes
+PASS projectile leaving shot bounds completes without explosion
+PASS real cluster prefab children inherit action; real digger completes same action
+PASS all phase-one checks.

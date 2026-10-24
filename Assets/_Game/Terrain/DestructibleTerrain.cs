@@ -15,6 +15,9 @@ namespace TankGame.Terrain
         private Color32[] soilPixels, grassPixels;
         private float[] heights;
         private float[] scorchAmounts;
+        private Color32[] cleanSoilPixels, cleanGrassPixels;
+        private float[] startingHeights;
+        private Vector2[] startingCollider;
         private int width, height;
         private float ppu;
         private Vector2 pivot;
@@ -37,6 +40,7 @@ namespace TankGame.Terrain
             ppu = source.pixelsPerUnit;
             soilTexture = CopySpriteTexture(source);
             soilPixels = soilTexture.GetPixels32();
+            cleanSoilPixels = (Color32[])soilPixels.Clone();
             soilSprite = MakeSprite(soilTexture);
             soilRenderer.sprite = soilSprite;
             if (grassRenderer != null && grassRenderer.sprite != null)
@@ -45,6 +49,7 @@ namespace TankGame.Terrain
                     throw new InvalidOperationException("Soil and grass must have matching texture dimensions.");
                 grassTexture = CopySpriteTexture(grassRenderer.sprite);
                 grassPixels = grassTexture.GetPixels32();
+                cleanGrassPixels = (Color32[])grassPixels.Clone();
                 grassSprite = MakeSprite(grassTexture);
                 grassRenderer.sprite = grassSprite;
             }
@@ -58,12 +63,30 @@ namespace TankGame.Terrain
             }
         }
 
+        public void ResetSurface()
+        {
+            InitializeSurface();
+            if (startingHeights == null) CaptureInitialGeometry();
+            soilPixels = (Color32[])cleanSoilPixels.Clone();
+            if (cleanGrassPixels != null) grassPixels = (Color32[])cleanGrassPixels.Clone();
+            heights = (float[])startingHeights.Clone();
+            Array.Clear(scorchAmounts, 0, scorchAmounts.Length); CraterCount = 0;
+            soilTexture.SetPixels32(soilPixels); soilTexture.Apply(false);
+            if (grassTexture != null) { grassTexture.SetPixels32(grassPixels); grassTexture.Apply(false); }
+            groundCollider.SetPath(0, startingCollider); Physics2D.SyncTransforms();
+        }
+        private void CaptureInitialGeometry()
+        {
+            startingHeights = (float[])heights.Clone(); startingCollider = groundCollider.GetPath(0);
+        }
+
         /// <summary>Removes a bowl from the surface and darkens the exposed soil, only in this match.</summary>
         public bool Carve(Vector2 worldCenter, float worldRadius)
         {
             if (float.IsNaN(worldRadius) || float.IsInfinity(worldRadius) || worldRadius <= 0f) return false;
             if (!float.IsFinite(worldCenter.x) || !float.IsFinite(worldCenter.y)) return false;
             InitializeSurface();
+            if (startingHeights == null) CaptureInitialGeometry();
             Vector2 center = transform.InverseTransformPoint(worldCenter);
             Vector3 scale = transform.lossyScale;
             float rx = worldRadius / Mathf.Max(0.001f, Mathf.Abs(scale.x));
@@ -139,6 +162,7 @@ namespace TankGame.Terrain
             {
                 var newSoil = sourceSoil.GetPixels32();
                 var newSurface = sourceSurface.GetPixels32();
+                cleanSoilPixels = (Color32[])newSoil.Clone(); cleanGrassPixels = (Color32[])newSurface.Clone();
                 // Keep exactly the same occupancy mask. Theme changes cannot refill a hole.
                 for (int i = 0; i < soilPixels.Length; i++)
                 {

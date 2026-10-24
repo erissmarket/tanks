@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: weapon-railgun
   weaponName: Railgun
+  description: Precise. Half bypasses shields.
   icon: {fileID: 21300000, guid: e68e1ad1198673f2f43226b3a8d7faae, type: 3}
   projectilePrefab: {fileID: 2324664555139329534, guid: 71ef2ad7593e2b94c890cd4e75d59b4c, type: 3}
-  baseDamage: 40
+  baseDamage: 38
   launchSpeed: 28
-  explosionRadius: 1.2
+  explosionRadius: 0.65
+  ammunition: 3
+  minimumDamageFraction: 0.35
+  shieldPenetration: 0.5

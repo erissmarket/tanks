@@ -18,6 +18,25 @@ namespace TankGame.Tank
         private readonly RaycastHit2D[] groundHits = new RaycastHit2D[16];
         private Rigidbody2D body;
         private float moveDirection;
+        private bool budgetActive, previousDriven;
+        private Vector2 previousPosition, previousTangent = Vector2.right;
+        private float previousDirection, minX, maxX;
+        public float RemainingMovement { get; private set; }
+        public bool MovementBudgetActive => budgetActive;
+        public float MovementSpeed => movementSpeed;
+        public void ConfigureSpeed(float value)
+        {
+            if(!float.IsFinite(value)||value<=0)throw new ArgumentOutOfRangeException(nameof(value));
+            Stop();movementSpeed=value;
+        }
+        public void BeginTurnBudget(float distance, float minimumX, float maximumX)
+        {
+            if (!float.IsFinite(distance) || distance < 0f || !float.IsFinite(minimumX) || !float.IsFinite(maximumX) || minimumX >= maximumX)
+                throw new ArgumentOutOfRangeException(nameof(distance));
+            Stop();
+            budgetActive = true; RemainingMovement = distance; minX = minimumX; maxX = maximumX;
+            previousPosition = body.position; previousDriven = false;
+        }
         public bool IsGrounded { get; private set; }
         public Vector2 GroundNormal { get; private set; } = Vector2.up;
 
@@ -32,7 +51,7 @@ namespace TankGame.Tank
         {
             if (float.IsNaN(direction) || float.IsInfinity(direction))
                 throw new ArgumentOutOfRangeException(nameof(direction));
-            moveDirection = isActiveAndEnabled ? Mathf.Clamp(direction, -1f, 1f) : 0f;
+            moveDirection = isActiveAndEnabled && (!budgetActive || RemainingMovement > 0f) ? Mathf.Clamp(direction, -1f, 1f) : 0f;
         }
 
         /// <summary>Immediately stops driven motion without cancelling a fall.</summary>
@@ -53,6 +72,18 @@ namespace TankGame.Tank
 
         private void FixedUpdate()
         {
+            if (budgetActive)
+            {
+                if (previousDriven)
+                {
+                    float driven = Mathf.Max(0f, Vector2.Dot(body.position - previousPosition, previousTangent) * previousDirection);
+                    RemainingMovement = Mathf.Max(0f, RemainingMovement - Mathf.Min(driven, movementSpeed * Time.fixedDeltaTime));
+                }
+                if (RemainingMovement <= .0001f) { RemainingMovement = 0f; Stop(); }
+                Vector2 position = body.position;
+                position.x = Mathf.Clamp(position.x, minX, maxX);
+                if (position != body.position) body.position = position;
+            }
             ProbeGround();
             Vector2 velocity = body.linearVelocity;
             float rate = Mathf.Abs(moveDirection) > 0.001f ? acceleration : braking;
@@ -61,6 +92,8 @@ namespace TankGame.Tank
                 Vector2 tangent = new Vector2(GroundNormal.y, -GroundNormal.x);
                 float speed = Mathf.MoveTowards(Vector2.Dot(velocity, tangent),
                     moveDirection * movementSpeed, rate * Time.fixedDeltaTime);
+                if (budgetActive && Mathf.Abs(moveDirection) > .001f)
+                    speed = Mathf.Clamp(speed, -RemainingMovement / Time.fixedDeltaTime, RemainingMovement / Time.fixedDeltaTime);
                 float normalSpeed = Vector2.Dot(velocity, GroundNormal);
                 // Keep upward impulses; a small downward bias follows descending hills.
                 velocity = tangent * speed + GroundNormal * Mathf.Max(normalSpeed, -groundAdhesion);
@@ -78,6 +111,14 @@ namespace TankGame.Tank
                 // Gravity and vertical impulses remain under the physics solver's control.
                 velocity.x = Mathf.MoveTowards(velocity.x, moveDirection * movementSpeed,
                     acceleration * airControl * Time.fixedDeltaTime);
+            }
+            if (budgetActive)
+            {
+                velocity.x = Mathf.Clamp(velocity.x, (minX-body.position.x)/Time.fixedDeltaTime, (maxX-body.position.x)/Time.fixedDeltaTime);
+                previousDriven = IsGrounded && Mathf.Abs(moveDirection) > .001f;
+                previousPosition = body.position;
+                previousTangent = new Vector2(GroundNormal.y, -GroundNormal.x);
+                previousDirection = Mathf.Sign(moveDirection);
             }
             body.linearVelocity = velocity;
         }

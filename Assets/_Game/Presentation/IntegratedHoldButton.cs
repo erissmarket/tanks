@@ -9,6 +9,7 @@ namespace TankGame.Presentation
         [SerializeField] private IntegratedInput input = null;
         [SerializeField] private int command = 0;
         private readonly HashSet<int> pointers = new HashSet<int>();
+        public void Configure(IntegratedInput source,int value){input=source;command=value;}
 
         public void OnPointerDown(PointerEventData data)
         {

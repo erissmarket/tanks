@@ -14,6 +14,18 @@ namespace TankGame.Projectiles
         private float elapsedLifetime;
         private bool initialized;
         private bool finished;
+        private bool completionRaised;
+        public ShotContext Shot { get; private set; }
+        public float MinimumDamageFraction { get; private set; } = 1f;
+        public float ShieldPenetration { get; private set; }
+
+        public void ConfigureDamage(float minimumFraction, float penetration)
+        {
+            if (!float.IsFinite(minimumFraction) || !float.IsFinite(penetration))
+                throw new ArgumentOutOfRangeException(nameof(minimumFraction));
+            MinimumDamageFraction = Mathf.Clamp01(minimumFraction);
+            ShieldPenetration = Mathf.Clamp01(penetration);
+        }
 
         public int OwnerPlayerIndex { get; private set; } = -1;
         public bool IsInitialized => initialized;
@@ -25,6 +37,7 @@ namespace TankGame.Projectiles
         public Rigidbody2D Body => body != null ? body : (body = GetComponent<Rigidbody2D>());
 
         public event Action<Projectile> Completed;
+        public static event Action<Projectile> Spawned;
 
         private void Awake()
         {
@@ -33,7 +46,7 @@ namespace TankGame.Projectiles
             ValidateLifetime();
         }
 
-        public void Initialize(int ownerPlayerIndex, float damage, float explosionRadius, Vector2 launchVelocity)
+        public void Initialize(int ownerPlayerIndex, float damage, float explosionRadius, Vector2 launchVelocity, ShotContext shot = null)
         {
             if (initialized || finished)
                 throw new InvalidOperationException("A projectile can only be initialized once.");
@@ -52,19 +65,25 @@ namespace TankGame.Projectiles
             if (impactHandler == null)
                 impactHandler = GetComponent<IProjectileImpactHandler>();
 
+            if (shot != null && (shot.OwnerPlayerIndex != ownerPlayerIndex || shot.IsCancelled))
+                throw new ArgumentException("Child projectile must retain a valid parent shot.", nameof(shot));
+            Shot = shot != null ? shot : new ShotContext(ownerPlayerIndex);
+            Shot.Add(this);
             OwnerPlayerIndex = ownerPlayerIndex;
             this.damage = damage;
             this.explosionRadius = explosionRadius;
             elapsedLifetime = 0f;
             initialized = true;
             body.linearVelocity = launchVelocity;
+            Spawned?.Invoke(this);
         }
 
         private void Update()
         {
-            if (finished)
+            if (!initialized || finished)
                 return;
 
+            if (Shot != null && !Shot.Contains(transform.position)) { CompleteAndDestroy(); return; }
             elapsedLifetime += Time.deltaTime;
             if (elapsedLifetime >= maximumLifetime)
             {
@@ -100,7 +119,7 @@ namespace TankGame.Projectiles
                 ? collision.GetContact(0).point : (Vector2)transform.position;
             try
             {
-                ExplosionDamage.Apply(impactPosition, damage, explosionRadius);
+                ExplosionDamage.Apply(impactPosition, damage, explosionRadius, this);
             }
             finally
             {
@@ -129,7 +148,8 @@ namespace TankGame.Projectiles
         /// </summary>
         public void TriggerExplosion(Vector2 center, float customDamage, float customRadius)
         {
-            ExplosionDamage.Apply(center, customDamage, customRadius);
+            if (!initialized || finished || (Shot != null && Shot.IsCancelled)) return;
+            ExplosionDamage.Apply(center, customDamage, customRadius, this);
         }
 
         /// <summary>
@@ -137,6 +157,10 @@ namespace TankGame.Projectiles
         /// </summary>
         public void CompleteAndDestroy()
         {
+            if (completionRaised) return;
+            completionRaised = true;
+            StopAllCoroutines();
+            if (Shot != null) Shot.Remove(this);
             finished = true;
             if (body != null)
                 body.simulated = false;
@@ -154,6 +178,14 @@ namespace TankGame.Projectiles
             }
         }
 
+        public void CancelWithoutExplosion()
+        {
+            StopAllCoroutines();
+            foreach (MonoBehaviour behavior in GetComponents<MonoBehaviour>())
+                if (behavior != this) { behavior.StopAllCoroutines(); behavior.enabled = false; }
+            CompleteAndDestroy();
+        }
+        private void OnDestroy() { if (Shot != null) Shot.Remove(this); }
         private void OnValidate() => ValidateLifetime();
 
         private void ValidateLifetime()

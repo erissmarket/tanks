@@ -1,0 +1,17 @@
+PASS shield absorbs damage before health
+PASS shield breaks and overflow hits health
+PASS railgun bypasses half of shield absorption
+PASS falling bypasses shield and emits death once
+PASS rematch restores shield and health
+PASS finite ammo exhausts exactly; empty fire creates no shell
+PASS switching cannot refill ammo; rematch can
+PASS base rocket remains unlimited
+PASS blast falloff uses distance to target collider
+PASS multiple colliders receive one damage event
+PASS absorbed shield damage gives no score; actual HP loss does
+PASS cluster damage capped at four times fourteen; children inherit falloff
+PASS all seven actual weapon prefabs launch with balanced damage
+PASS heavy shield trades sixty capacity for 2.25 movement units
+PASS actual match applies heavy movement, no turn regeneration, and shield-proof fall elimination
+PASS empty-ammo action preserves active turn and remaining timer
+PASS all phase-two checks.

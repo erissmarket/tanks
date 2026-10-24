@@ -18,6 +18,7 @@ namespace TankGame.Terrain
         [SerializeField] private Button[] buttons = Array.Empty<Button>();
         private UnityEngine.Events.UnityAction[] handlers;
         public int SelectedTheme => selectedTheme;
+        public event Action<int> ThemeChanged;
         public TerrainThemeDefinition[] Themes => (TerrainThemeDefinition[])themes.Clone();
 
         private void Awake() => SelectTheme(selectedTheme);
@@ -70,6 +71,7 @@ namespace TankGame.Terrain
                 colors.fadeDuration = 0.08f;
                 buttons[i].colors = colors;
             }
+            ThemeChanged?.Invoke(index);
         }
     }
 }

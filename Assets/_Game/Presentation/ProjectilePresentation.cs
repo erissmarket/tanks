@@ -21,13 +21,13 @@ namespace TankGame.Presentation
         private void LateUpdate()
         {
             Vector2 velocity = body.linearVelocity;
-            if (velocity.sqrMagnitude > 0.000001f)
+            if (visual != null && velocity.sqrMagnitude > 0.000001f)
                 visual.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (impactShown || !projectile.IsInitialized) return;
+            if (BattleFeedback.Active != null || explosionVisual == null || impactShown || !projectile.IsInitialized) return;
             impactShown = true;
             Vector2 position = collision.contactCount > 0 ? collision.GetContact(0).point : (Vector2)transform.position;
             GameObject effect = Instantiate(explosionVisual, position, Quaternion.identity);

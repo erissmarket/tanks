@@ -171,7 +171,10 @@ namespace TankGame.Projectiles
                 Quaternion rot = Quaternion.Euler(0f, 0f, currentAngle);
 
                 Projectile sub = Instantiate(submunitionPrefab, origin, rot);
-                sub.Initialize(ownerIndex, submunitionDamage, submunitionExplosionRadius, launchVel);
+                sub.Initialize(ownerIndex, submunitionDamage, submunitionExplosionRadius, launchVel,
+                    parentProjectile != null ? parentProjectile.Shot : null);
+                if (parentProjectile != null)
+                    sub.ConfigureDamage(parentProjectile.MinimumDamageFraction, parentProjectile.ShieldPenetration);
             }
 
             ClusterSplit?.Invoke(clusterCount);

@@ -23,9 +23,17 @@ namespace TankGame.Presentation
             resolution = new Vector2Int(Screen.width, Screen.height);
             orientation = Screen.orientation;
             RectTransform rect = (RectTransform)transform;
-            rect.anchorMin = new Vector2(previous.xMin / Screen.width, previous.yMin / Screen.height);
-            rect.anchorMax = new Vector2(previous.xMax / Screen.width, previous.yMax / Screen.height);
+            Rect normalized=Normalize(previous,new Vector2(Screen.width,Screen.height));
+            rect.anchorMin = normalized.min;
+            rect.anchorMax = normalized.max;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
+        }
+        public static Rect Normalize(Rect safe,Vector2 size)
+        {
+            if(!float.IsFinite(size.x)||!float.IsFinite(size.y)||size.x<=0||size.y<=0||!float.IsFinite(safe.x)||!float.IsFinite(safe.y)||!float.IsFinite(safe.width)||!float.IsFinite(safe.height))return new Rect(0,0,1,1);
+            float x=Mathf.Clamp01(safe.xMin/size.x),y=Mathf.Clamp01(safe.yMin/size.y);
+            float right=Mathf.Clamp01(safe.xMax/size.x),top=Mathf.Clamp01(safe.yMax/size.y);
+            return right>x&&top>y?Rect.MinMaxRect(x,y,right,top):new Rect(0,0,1,1);
         }
     }
 }

@@ -1,0 +1,14 @@
+PASS all three tank definitions have distinct thumbnails and class art
+PASS scout rejects heavy shield; other classes support it
+PASS scout applies 80 HP, 3.8 speed and 4.2 movement in actual match
+PASS incompatible shield is rejected without partial loadout changes
+PASS heavy tank and heavy shield multipliers compose to 1.65 movement
+PASS sixty shield absorbs first, then twenty-percent armor reduces overflow
+PASS rail bypasses half shield while armor still protects hull
+PASS falling eliminates armored shielded tank
+PASS heavy-to-light rematch clears old armor and health capacity
+PASS score counts eighteen actual HP after shield and armor
+PASS turn cap compares HP percentage across different tank capacities
+PASS garage downgrades incompatible shield and rejects impossible selection
+PASS local physics simulation confirms scout travels farther than heavy at equal input time
+PASS all phase-three checks.

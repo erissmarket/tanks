@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Data.WeaponData
   weaponId: weapon-heavy-mortar
   weaponName: Heavy Mortar
+  description: Wide blast. Limited ammunition.
   icon: {fileID: 21300000, guid: 9a158bebe281fb279af30510cb631b12, type: 3}
   projectilePrefab: {fileID: 8913985647957959425, guid: f200d2a03a16fa54ca62deeaa9dd9fc9, type: 3}
-  baseDamage: 60
+  baseDamage: 48
   launchSpeed: 11
-  explosionRadius: 3.2
+  explosionRadius: 2.4
+  ammunition: 3
+  minimumDamageFraction: 0.35
+  shieldPenetration: 0

@@ -218,5 +218,5 @@ MonoBehaviour:
   ejectionSpeed: 7
   velocityInheritance: 0.25
   triggerOnAirburst: 1
-  submunitionDamage: 15
-  submunitionExplosionRadius: 1.2
+  submunitionDamage: 14
+  submunitionExplosionRadius: 0.9

@@ -25,11 +25,18 @@ namespace TankGame.Presentation
 
         private readonly bool[] held = new bool[5];
         private bool moving;
+        private bool waitingForNeutral;
         private int pointerFrame = -1;
+        public bool UiBlocked { get; private set; }
+        public float AimAngle=>aim!=null?aim.CurrentAimAngle:0;
+        public WeaponData CurrentWeapon=>weaponController!=null?weaponController.CurrentWeapon:null;
+        public void SetUiBlocked(bool blocked){UiBlocked=blocked;if(blocked)Clear();}
+        public void BindHoldButtons(Button[] buttons)=>holdButtons=buttons;
 
-        public bool CanAct => isActiveAndEnabled && gameManager.CurrentState == MatchState.TurnActive
+        public bool CanAct => isActiveAndEnabled && !UiBlocked && !actions.IsPaused && gameManager.CurrentState == MatchState.TurnActive
             && turns.CurrentPlayerIndex == 0 && player.CanAct;
-        public bool CanRestart => bootstrap.CanRestart;
+        public bool CanRestart => !UiBlocked && bootstrap.CanRestart;
+        public bool CanFire => CanAct && weaponController != null && weaponController.CanFire;
 
         public WeaponData[] AvailableWeapons
         {
@@ -72,7 +79,7 @@ namespace TankGame.Presentation
             held[command] = pressed && CanAct;
             if (!pressed && command < 2 && moving)
             {
-                if (CanAct) actions.Stop(0);
+                if (player != null) player.GetComponent<TankGame.Tank.TankMotor>().Stop();
                 moving = false;
             }
         }
@@ -80,7 +87,7 @@ namespace TankGame.Presentation
         public void Fire()
         {
             pointerFrame = Time.frameCount;
-            if (!CanAct) return;
+            if (!CanFire) return;
             Vector2 tip = barrel.TransformPoint(new Vector3(0.45f, 0f, 0f));
             Vector2 basis = barrel.TransformPoint(new Vector3(-0.45f, 0f, 0f));
             actions.Fire(0, tip - basis);
@@ -95,11 +102,17 @@ namespace TankGame.Presentation
         private void Update()
         {
             foreach (Button button in holdButtons) button.interactable = CanAct;
-            Keyboard keyboard = Application.isEditor ? Keyboard.current : null;
+            Keyboard keyboard = Keyboard.current;
             bool pointer = System.Array.Exists(held, value => value) || pointerFrame == Time.frameCount;
             if (CanRestart && keyboard != null && !pointer && keyboard.rKey.wasPressedThisFrame) { Restart(); return; }
             if (!CanAct) { Clear(); return; }
 
+            // A key held during pause or the opponent's turn cannot become a new command on resume.
+            if (waitingForNeutral)
+            {
+                if (keyboard != null && (keyboard.aKey.isPressed || keyboard.dKey.isPressed || keyboard.wKey.isPressed || keyboard.sKey.isPressed || keyboard.spaceKey.isPressed)) return;
+                waitingForNeutral = false;
+            }
             // Weapon switching with numeric keys 1 to 7
             if (keyboard != null && availableWeapons != null && availableWeapons.Length > 0)
             {
@@ -128,34 +141,10 @@ namespace TankGame.Presentation
             if (keyboard != null && !pointer && keyboard.spaceKey.wasPressedThisFrame) Fire();
         }
 
-        private void OnGUI()
-        {
-            if (turns == null || player == null) return;
-
-            var currentWeapon = weaponController != null ? weaponController.CurrentWeapon : null;
-            string weaponName = currentWeapon != null ? currentWeapon.WeaponName : "Standard";
-            Sprite weaponIcon = currentWeapon != null ? currentWeapon.Icon : null;
-
-            GUI.color = new Color(0.05f, 0.08f, 0.12f, 0.85f);
-            GUI.Box(new Rect(15, 15, 480, 85), GUIContent.none);
-
-            if (weaponIcon != null && weaponIcon.texture != null)
-            {
-                GUI.color = Color.white;
-                GUI.DrawTexture(new Rect(25, 22, 70, 70), weaponIcon.texture, ScaleMode.ScaleToFit);
-            }
-
-            GUI.color = Color.white;
-            GUILayout.BeginArea(new Rect(105, 20, 380, 75));
-            GUILayout.Label($"<b>Weapon:</b> <color=#FFA726>{weaponName}</color> | <b>Turn:</b> Player {turns.CurrentPlayerIndex + 1}");
-            GUILayout.Label("<size=11><b>Keys [1-7]:</b> Rocket | Mortar | Railgun | Floater | Bouncy | Cluster | Digger</size>");
-            GUILayout.Label("<size=11><b>Controls:</b> [A/D] Move | [W/S] Aim | [Space] Fire | [R] Restart</size>");
-            GUILayout.EndArea();
-        }
-
         private void Clear()
         {
-            if (moving && CanAct) actions.Stop(0);
+            waitingForNeutral = true;
+            if (moving && player != null) player.GetComponent<TankGame.Tank.TankMotor>().Stop();
             moving = false;
             System.Array.Clear(held, 0, held.Length);
         }

@@ -23,6 +23,7 @@ namespace TankGame.Core
         private TurnManager turnManager;
         private MatchFlowController matchFlow;
         private bool firing;
+        public bool IsPaused => matchFlow != null && matchFlow.IsPaused;
 
         public void Initialize(GameManager gameManager, TurnManager turnManager, MatchFlowController matchFlow)
         {
@@ -93,6 +94,7 @@ namespace TankGame.Core
         public Projectile Fire(int playerIndex, Vector2 direction)
         {
             PlayerRegistration player = Authorize(playerIndex);
+            if (!player.Weapon.CanFire) return null;
             firing = true;
             Projectile projectile = null;
             try
@@ -102,6 +104,11 @@ namespace TankGame.Core
                 if (projectile == null || !projectile.IsInitialized || projectile.IsFinished
                     || !projectile.isActiveAndEnabled || projectile.OwnerPlayerIndex != playerIndex)
                     throw new InvalidOperationException("Weapon did not create a valid active projectile.");
+                // The muzzle can overlap the owner's hull as the barrel tilts. The shell must
+                // leave that hull; radial explosion damage still includes its owner.
+                foreach(var shellCollider in projectile.GetComponentsInChildren<Collider2D>())
+                    foreach(var ownerCollider in player.Motor.GetComponentsInChildren<Collider2D>())
+                        Physics2D.IgnoreCollision(shellCollider,ownerCollider,true);
                 matchFlow.NotifyProjectileFired(projectile);
                 return projectile;
             }
@@ -127,7 +134,7 @@ namespace TankGame.Core
         {
             ValidateDependencies();
             ValidateIndex(playerIndex);
-            if (!isActiveAndEnabled || !matchFlow.isActiveAndEnabled || firing)
+            if (!isActiveAndEnabled || !matchFlow.isActiveAndEnabled || matchFlow.IsPaused || firing)
                 throw new InvalidOperationException("Actions are disabled or a fire command is already in progress.");
             for (int index = 0; index < players.Length; index++)
             {

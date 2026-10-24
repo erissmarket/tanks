@@ -1,0 +1,19 @@
+PASS scene installs one active feedback service with a supported material
+PASS seven weapon styles have distinct color and audio pitch
+PASS camera retains baseline on widescreen and field width on tablets
+PASS real player launch ignores owner contact while retaining other collisions
+PASS all seven real projectiles receive trails without changing damage or velocity
+PASS cluster children inherit style and receive the same shot identity
+PASS each actual detonation generates one presentation event
+PASS cancelling a projectile does not invent an explosion
+PASS damage feedback reports actual shield absorption and health loss
+PASS the exact shield-breaking hit is identified
+PASS effect budget remains bounded during repeated cluster-style impacts
+PASS audio is cached and respects mute
+PASS engine sound starts and stops with movement and pause
+PASS nearby damage is coalesced into a bounded floating label
+PASS pause freezes presentation lifetime and scaled time
+PASS transient effects and labels expire after resume
+PASS surrender clears presentation without granting coins
+PASS disabling and enabling restores subscriptions without duplicate explosions
+PASS all phase-six checks.

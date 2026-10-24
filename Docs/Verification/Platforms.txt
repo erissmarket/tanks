@@ -1,0 +1,3 @@
+Windows x64 support: True
+Android support: False
+Android requires Android Build Support and SDK/NDK/JDK; device testing requires an attached authorized device.

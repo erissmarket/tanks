@@ -1,0 +1,9 @@
+PASS release scene opens home without starting a battle
+PASS isolated test wallet unlocks the full legal equipment set
+PASS complete real-physics match: 10 shots, 10 turns, Elimination, reward 110, wins 1
+PASS natural result persists once and setup preferences remain intact
+PASS return home leaves no projectile, damage label or impact effect
+PASS 200 impact bursts stay within the 64-effect budget
+METRICS peak projectiles=2, peak effects=25, allocated memory start=146867758, end=152585534, elapsed=2.6s; Editor figures are not phone performance measurements.
+PASS no runtime error, exception or assertion during qualification
+PASS all phase-seven checks (7 cases; matrix 0).

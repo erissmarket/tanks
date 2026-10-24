@@ -2,387 +2,295 @@ using System;
 using System.Collections.Generic;
 using TankGame.Player;
 using TankGame.Projectiles;
+using TankGame.Tank;
 using UnityEngine;
 
 namespace TankGame.Core
 {
     public sealed class MatchFlowController : MonoBehaviour
     {
+        [SerializeField] private MatchRules rules;
+        private MatchRules fallbackRules;
         private GameManager gameManager;
         private TurnManager turnManager;
         private readonly IPlayerController[] players = new IPlayerController[2];
         private readonly HealthComponent[] health = new HealthComponent[2];
-        private readonly Action[] deathHandlers = new Action[2];
-        private Projectile activeProjectile;
-        private bool matchRunning;
-        private bool coordinating;
-        private bool endingMatch;
-        private bool completionPending;
-        private bool deathPending;
-        private bool matchEndedNotified;
-        private int matchGeneration;
-
+        private readonly TankMotor[] motors = new TankMotor[2];
+        private readonly float[] startingHealth = new float[2];
+        private readonly float[] creditedDamage = new float[2];
+        private readonly bool[] fallen = new bool[2];
+        private readonly int[] finalScores = new int[2];
+        private bool scoresFinalized;
+        private ShotContext activeShot;
+        private bool matchRunning, coordinating, endingMatch, matchEndedNotified, deathPending;
+        private float shotElapsed, settleElapsed, savedTimeScale = 1f;
         public MatchResult FinalResult { get; private set; }
-
-        // Null result means the match was ended without a health-based outcome.
+        public MatchEndReason EndReason { get; private set; }
+        public bool IsPaused { get; private set; }
+        public bool IsRunning => matchRunning;
+        public MatchState State=>gameManager!=null?gameManager.CurrentState:MatchState.None;
+        public int CompletedTurns { get; private set; }
+        public int MatchNumber { get; private set; }
+        public float RemainingTurnSeconds { get; private set; }
+        public int ActiveShotProjectileCount => activeShot != null ? activeShot.ActiveCount : 0;
+        public int CurrentPlayerIndex => turnManager != null ? turnManager.CurrentPlayerIndex : -1;
+        public float RemainingMovement => CurrentPlayerIndex >= 0 && motors[CurrentPlayerIndex] != null
+            ? motors[CurrentPlayerIndex].RemainingMovement : 0f;
+        public MatchRules Rules
+        {
+            get
+            {
+                if (rules != null) return rules;
+                if (fallbackRules == null) fallbackRules = ScriptableObject.CreateInstance<MatchRules>();
+                return fallbackRules;
+            }
+        }
         public event Action<MatchResult> MatchEnded;
 
-        /// <summary>Registers both players in either order, before starting a match.</summary>
-        public void Initialize(GameManager gameManager, TurnManager turnManager,
-            IPlayerController firstPlayer, IPlayerController secondPlayer)
+        public void ConfigureRules(MatchRules value)
         {
-            if (matchRunning || coordinating || endingMatch)
-                throw new InvalidOperationException("End the match before replacing its dependencies.");
-            if (gameManager == null)
-                throw new ArgumentNullException(nameof(gameManager));
-            if (turnManager == null)
-                throw new ArgumentNullException(nameof(turnManager));
-            ValidatePlayer(firstPlayer, nameof(firstPlayer));
-            ValidatePlayer(secondPlayer, nameof(secondPlayer));
-            if (firstPlayer.PlayerIndex == secondPlayer.PlayerIndex)
-                throw new ArgumentException("Register exactly one player with index 0 and one with index 1.");
-
-            coordinating = true;
-            try
-            {
-                UnsubscribeHealth();
-                Array.Clear(health, 0, health.Length);
-                DisablePlayers();
-                this.gameManager = gameManager;
-                this.turnManager = turnManager;
-                players[firstPlayer.PlayerIndex] = firstPlayer;
-                players[secondPlayer.PlayerIndex] = secondPlayer;
-                DisablePlayers();
-            }
-            finally
-            {
-                coordinating = false;
-            }
+            if (matchRunning) throw new InvalidOperationException("Configure rules before starting the match.");
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            rules = value; rules.Validate();
         }
-
+        public void Initialize(GameManager gameManager, TurnManager turnManager, IPlayerController firstPlayer, IPlayerController secondPlayer)
+        {
+            if (matchRunning || coordinating || endingMatch) throw new InvalidOperationException("End the current match before initialization.");
+            if (gameManager == null) throw new ArgumentNullException(nameof(gameManager));
+            if (turnManager == null) throw new ArgumentNullException(nameof(turnManager));
+            ValidatePlayer(firstPlayer); ValidatePlayer(secondPlayer);
+            if (firstPlayer.PlayerIndex == secondPlayer.PlayerIndex) throw new ArgumentException("Player indices must be distinct.");
+            Unsubscribe(); DisablePlayers();
+            this.gameManager = gameManager; this.turnManager = turnManager;
+            Array.Clear(health, 0, 2); Array.Clear(motors, 0, 2);
+            players[firstPlayer.PlayerIndex] = firstPlayer; players[secondPlayer.PlayerIndex] = secondPlayer;
+            DisablePlayers();
+        }
         public void RegisterHealth(int playerIndex, HealthComponent healthComponent)
         {
-            if (gameManager == null || turnManager == null)
-                throw new InvalidOperationException("Initialize the coordinator before registering health.");
-            if (matchRunning || coordinating || endingMatch)
-                throw new InvalidOperationException("Register health before starting a match or after ending it.");
-            if (playerIndex < 0 || playerIndex > 1)
-                throw new ArgumentOutOfRangeException(nameof(playerIndex), "Player indices must be 0 and 1.");
-            if (healthComponent == null)
-                throw new ArgumentNullException(nameof(healthComponent));
-            if (!ReferenceEquals(health[playerIndex], null) || health[1 - playerIndex] == healthComponent)
-                throw new ArgumentException("Each player must register a distinct health component exactly once.");
-
+            if (gameManager == null || matchRunning || coordinating || endingMatch) throw new InvalidOperationException("Register health after initialization and before starting.");
+            if (playerIndex < 0 || playerIndex > 1) throw new ArgumentOutOfRangeException(nameof(playerIndex));
+            if (healthComponent == null) throw new ArgumentNullException(nameof(healthComponent));
+            if (health[playerIndex] != null || health[1-playerIndex] == healthComponent) throw new ArgumentException("Health registrations must be distinct and unique.");
             health[playerIndex] = healthComponent;
+            motors[playerIndex] = healthComponent.GetComponent<TankMotor>();
         }
-
-        /// <summary>The match owner must ResetHealth on both players before restarting; this method does not reset health.</summary>
         public void StartMatch()
         {
             ValidateRegistration();
-            ValidateHealth();
             if (!isActiveAndEnabled || matchRunning || coordinating || endingMatch
                 || (gameManager.CurrentState != MatchState.None && gameManager.CurrentState != MatchState.MatchEnded))
-                throw new InvalidOperationException("Start an enabled coordinator from None or MatchEnded.");
-            if (health[0].CurrentHealth <= 0f || health[1].CurrentHealth <= 0f)
-                throw new InvalidOperationException("Reset both players' health before starting a match.");
-
-            coordinating = true;
+                throw new InvalidOperationException("Start from None or MatchEnded after restoring both players.");
+            if (health[0].CurrentHealth <= 0f || health[1].CurrentHealth <= 0f) throw new InvalidOperationException("Reset health before restarting.");
+            Rules.Validate(); Unsubscribe();
+            SetPaused(false);
+            activeShot = null; deathPending = false; FinalResult = null; EndReason = MatchEndReason.None;
+            CompletedTurns = 0; MatchNumber++; matchEndedNotified = false; scoresFinalized = false;
+            Array.Clear(creditedDamage, 0, 2); Array.Clear(fallen, 0, 2);
+            for (int i = 0; i < 2; i++) { startingHealth[i] = health[i].CurrentHealth; health[i].Died += OnPlayerDied; }
+            ExplosionDamage.DamageApplied += OnDamageApplied;
+            matchRunning = true; coordinating = true;
             try
             {
-                DetachProjectile();
-                completionPending = false;
-                deathPending = false;
-                FinalResult = null;
-                matchEndedNotified = false;
-                matchRunning = true;
-                SubscribeHealth();
-                DisablePlayers();
-                if (!matchRunning)
-                    return;
-                gameManager.ChangeState(MatchState.Starting);
-                if (!matchRunning)
-                    return;
+                DisablePlayers(); gameManager.ChangeState(MatchState.Starting);
+                if (!matchRunning) return;
                 turnManager.StartFirstTurn();
-                if (matchRunning && !deathPending)
-                    ActivateCurrentTurn();
+                if (matchRunning) ActivateCurrentTurn();
             }
-            finally
-            {
-                coordinating = false;
-            }
+            finally { coordinating = false; }
         }
-
-        /// <summary>Register the initialized projectile returned by WeaponController.Fire immediately.</summary>
         public void NotifyProjectileFired(Projectile projectile)
         {
             ValidateRegistration();
-            if (!matchRunning || coordinating || endingMatch
-                || gameManager.CurrentState != MatchState.TurnActive || activeProjectile != null)
-                throw new InvalidOperationException("A projectile can only be registered during an active turn.");
-            if (projectile == null)
-                throw new ArgumentNullException(nameof(projectile));
-            if (!projectile.IsInitialized || projectile.IsFinished || !projectile.isActiveAndEnabled
-                || projectile.OwnerPlayerIndex != turnManager.CurrentPlayerIndex)
-                throw new ArgumentException("Use an active, initialized projectile belonging to the current player.", nameof(projectile));
-
-            int firingPlayerIndex = turnManager.CurrentPlayerIndex;
-            coordinating = true;
-            try
-            {
-                activeProjectile = projectile;
-                activeProjectile.Completed += OnProjectileCompleted;
-                DisablePlayers();
-                if (matchRunning)
-                    gameManager.ChangeState(MatchState.ProjectileFlying);
-                coordinating = false;
-                if (completionPending && matchRunning)
-                {
-                    completionPending = false;
-                    OnProjectileCompleted(activeProjectile);
-                }
-            }
-            catch (Exception registrationError)
-            {
-                coordinating = true;
-                completionPending = false;
-                DetachProjectile();
-                try
-                {
-                    if (matchRunning)
-                    {
-                        if (gameManager.CurrentState == MatchState.TurnActive && !projectile.IsFinished
-                            && turnManager.CurrentPlayerIndex == firingPlayerIndex)
-                        {
-                            players[turnManager.CurrentPlayerIndex].EnableControl();
-                            if (!players[turnManager.CurrentPlayerIndex].CanAct)
-                                throw new InvalidOperationException("Could not restore active player control.");
-                        }
-                        else
-                        {
-                            EndMatch();
-                        }
-                    }
-                }
-                catch (Exception recoveryError)
-                {
-                    try { EndMatch(); }
-                    catch (Exception endError)
-                    {
-                        throw new AggregateException(registrationError, recoveryError, endError);
-                    }
-                    throw new AggregateException(registrationError, recoveryError);
-                }
-                throw;
-            }
-            finally
-            {
-                coordinating = false;
-            }
-        }
-
-        public void EndMatch()
-        {
-            if (endingMatch || matchEndedNotified)
-                return;
-            if (gameManager == null)
-                throw new InvalidOperationException("Initialize the coordinator before ending a match.");
-
-            endingMatch = true;
-            try
-            {
-                matchRunning = false;
-                completionPending = false;
-                DetachProjectile();
-                UnsubscribeHealth();
-                deathPending = false;
-                var errors = new List<Exception>();
-                foreach (IPlayerController player in players)
-                {
-                    if (player == null || (player is UnityEngine.Object unityPlayer && unityPlayer == null))
-                        continue;
-                    try { player.DisableControl(); }
-                    catch (Exception error) { errors.Add(error); }
-                }
-                try { gameManager.ChangeState(MatchState.MatchEnded); }
-                catch (Exception error) { errors.Add(error); }
-                matchEndedNotified = true;
-                Action<MatchResult> handlers = MatchEnded;
-                if (handlers != null)
-                {
-                    foreach (Action<MatchResult> handler in handlers.GetInvocationList())
-                    {
-                        try { handler(FinalResult); }
-                        catch (Exception error) { errors.Add(error); }
-                    }
-                }
-                if (errors.Count > 0)
-                    throw new AggregateException("Match ended, but a lifecycle callback failed.", errors);
-            }
-            finally
-            {
-                endingMatch = false;
-            }
-        }
-
-        private void OnProjectileCompleted(Projectile projectile)
-        {
-            if (!matchRunning || projectile != activeProjectile)
-                return;
-
-            if (coordinating)
-            {
-                completionPending = true;
-                return;
-            }
-
-            coordinating = true;
-            try
-            {
-                // Clear identity and subscription before invoking external callbacks.
-                DetachProjectile();
-                gameManager.ChangeState(MatchState.Resolving);
-                if (!matchRunning)
-                    return;
-                if (TryEndFromHealth())
-                    return;
-                ValidateRegistration();
-                DisablePlayers();
-                if (!matchRunning)
-                    return;
-                turnManager.AdvanceTurn();
-                if (matchRunning)
-                    ActivateCurrentTurn();
-            }
-            catch (Exception completionError)
-            {
-                try { EndMatch(); }
-                catch (Exception endError) { throw new AggregateException(completionError, endError); }
-                throw;
-            }
-            finally
-            {
-                coordinating = false;
-            }
-        }
-
-        private void ActivateCurrentTurn()
-        {
-            if (deathPending)
-                return;
-            players[turnManager.CurrentPlayerIndex].EnableControl();
-            if (matchRunning && !deathPending)
-                gameManager.ChangeState(MatchState.TurnActive);
-        }
-
-        private void SubscribeHealth()
-        {
-            UnsubscribeHealth();
-            int generation = ++matchGeneration;
-            for (int index = 0; index < health.Length; index++)
-            {
-                deathHandlers[index] = () => OnPlayerDied(generation);
-                health[index].Died += deathHandlers[index];
-            }
-        }
-
-        private void UnsubscribeHealth()
-        {
-            for (int index = 0; index < health.Length; index++)
-            {
-                if (!ReferenceEquals(health[index], null) && deathHandlers[index] != null)
-                    health[index].Died -= deathHandlers[index];
-                deathHandlers[index] = null;
-            }
-        }
-
-        private void OnPlayerDied(int generation)
-        {
-            if (!matchRunning || generation != matchGeneration || deathPending)
-                return;
-
-            deathPending = true;
+            if (!matchRunning || IsPaused || coordinating || endingMatch || gameManager.CurrentState != MatchState.TurnActive || activeShot != null)
+                throw new InvalidOperationException("Only one shot can be accepted during the active turn.");
+            if (projectile == null || !projectile.IsInitialized || projectile.IsFinished || !projectile.isActiveAndEnabled
+                || projectile.OwnerPlayerIndex != CurrentPlayerIndex || projectile.Shot == null)
+                throw new ArgumentException("Register an active projectile owned by the active player.", nameof(projectile));
+            activeShot = projectile.Shot; shotElapsed = 0f;
+            activeShot.SetBounds(Rules.minimumX-24f, Rules.maximumX+24f, Rules.killY-4f, 40f);
             DisablePlayers();
-            if (gameManager.CurrentState == MatchState.TurnActive || gameManager.CurrentState == MatchState.Starting)
-                gameManager.ChangeState(MatchState.Resolving);
+            gameManager.ChangeState(MatchState.ProjectileFlying);
         }
+        private void Update() => AdvanceSimulation(Time.deltaTime);
 
-        private void LateUpdate()
+        // A deterministic tick also lets isolated Play Mode tests cover long rules without waiting minutes.
+        public void AdvanceSimulation(float deltaTime)
         {
-            if (matchRunning && deathPending && !coordinating)
-                TryEndFromHealth();
-        }
-
-        private bool TryEndFromHealth()
-        {
-            ValidateHealth();
-            bool playerZeroDead = health[0].CurrentHealth <= 0f;
-            bool playerOneDead = health[1].CurrentHealth <= 0f;
-            if (!playerZeroDead && !playerOneDead)
+            if (!float.IsFinite(deltaTime) || deltaTime < 0f) throw new ArgumentOutOfRangeException(nameof(deltaTime));
+            if (!matchRunning || IsPaused || coordinating || endingMatch) return;
+            for (int i = 0; i < 2; i++)
             {
-                deathPending = false;
-                return false;
+                if (health[i] != null && health[i].CurrentHealth > 0f && health[i].transform.position.y < Rules.killY)
+                { fallen[i] = true; health[i].Eliminate(); }
             }
-
-            FinalResult = playerZeroDead && playerOneDead
-                ? new MatchResult(null, null)
-                : new MatchResult(playerZeroDead ? 1 : 0, playerZeroDead ? 0 : 1);
-            EndMatch();
+            if (!matchRunning) return;
+            if (gameManager.CurrentState == MatchState.TurnActive)
+            {
+                if (deathPending) { BeginResolution(); return; }
+                RemainingTurnSeconds = Mathf.Max(0f, RemainingTurnSeconds - deltaTime);
+                if (RemainingTurnSeconds <= 0f) BeginResolution();
+            }
+            else if (gameManager.CurrentState == MatchState.ProjectileFlying)
+            {
+                shotElapsed += deltaTime;
+                if (activeShot != null && shotElapsed >= Rules.shotTimeoutSeconds) activeShot.Cancel();
+                if (activeShot == null || activeShot.ActiveCount == 0) BeginResolution();
+            }
+            else if (gameManager.CurrentState == MatchState.Resolving)
+            {
+                settleElapsed += deltaTime;
+                if (settleElapsed >= Rules.maximumSettleSeconds || (settleElapsed >= Rules.minimumSettleSeconds && TanksSettled())) ResolveTurn();
+            }
+        }
+        private void BeginResolution()
+        {
+            if (!matchRunning || gameManager.CurrentState == MatchState.Resolving) return;
+            settleElapsed = 0f; DisablePlayers();
+            gameManager.ChangeState(MatchState.Resolving);
+        }
+        private bool TanksSettled()
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                if (health[i].CurrentHealth <= 0f) continue;
+                var body = health[i].GetComponent<Rigidbody2D>();
+                if (body != null && (body.linearVelocity.sqrMagnitude > .01f || Mathf.Abs(body.angularVelocity) > 5f)) return false;
+            }
             return true;
         }
-
-        private void ValidateHealth()
+        private void ResolveTurn()
         {
-            if (health[0] == null || health[1] == null || health[0] == health[1])
-                throw new InvalidOperationException("Register distinct health components for players 0 and 1 before starting.");
-        }
-
-        private void DisablePlayers()
-        {
-            foreach (IPlayerController player in players)
+            coordinating = true;
+            try
             {
-                if (player != null && !(player is UnityEngine.Object unityPlayer && unityPlayer == null))
-                    player.DisableControl();
+                CompletedTurns++;
+                bool dead0 = health[0].CurrentHealth <= 0f, dead1 = health[1].CurrentHealth <= 0f;
+                if (dead0 || dead1)
+                {
+                    FinalResult = dead0 && dead1 ? new MatchResult(null, null) : new MatchResult(dead0 ? 1 : 0, dead0 ? 0 : 1);
+                    FinishMatch(fallen[0] || fallen[1] ? MatchEndReason.Fall : MatchEndReason.Elimination); return;
+                }
+                if (CompletedTurns >= Rules.maximumTurns)
+                {
+                    float a = health[0].CurrentHealth / health[0].MaxHealth, b = health[1].CurrentHealth / health[1].MaxHealth;
+                    FinalResult = Mathf.Abs(a-b) < .001f ? new MatchResult(null, null) : new MatchResult(a > b ? 0 : 1, a > b ? 1 : 0);
+                    FinishMatch(MatchEndReason.TurnLimit); return;
+                }
+                activeShot = null; deathPending = false;
+                turnManager.AdvanceTurn();
+                if (matchRunning) ActivateCurrentTurn();
             }
+            finally { coordinating = false; }
         }
-
-        private void DetachProjectile()
+        private void ActivateCurrentTurn()
         {
-            if (activeProjectile != null)
-                activeProjectile.Completed -= OnProjectileCompleted;
-            activeProjectile = null;
-        }
-
-        private void ValidateRegistration()
-        {
-            if (gameManager == null || turnManager == null)
-                throw new InvalidOperationException("Initialize the coordinator with both managers and both players first.");
-            for (int index = 0; index < players.Length; index++)
+            RemainingTurnSeconds = Rules.turnSeconds;
+            if (motors[CurrentPlayerIndex] != null)
             {
-                ValidatePlayer(players[index], "players");
-                if (players[index].PlayerIndex != index)
-                    throw new InvalidOperationException("Registered player indices changed; register players again before starting.");
+                var loadout=health[CurrentPlayerIndex].GetComponent<TankLoadout>();
+                float tankMultiplier=loadout!=null?loadout.MovementMultiplier:1f;
+                motors[CurrentPlayerIndex].BeginTurnBudget(Rules.movementPerTurn * tankMultiplier * health[CurrentPlayerIndex].ShieldMovementMultiplier, Rules.minimumX, Rules.maximumX);
             }
+            players[CurrentPlayerIndex].EnableControl();
+            if (matchRunning) gameManager.ChangeState(MatchState.TurnActive);
         }
-
-        private static void ValidatePlayer(IPlayerController player, string parameterName)
+        private void OnPlayerDied()
         {
-            if (player == null || (player is UnityEngine.Object unityPlayer && unityPlayer == null))
-                throw new ArgumentNullException(parameterName, "Both players are required.");
-            if (player.PlayerIndex < 0 || player.PlayerIndex > 1)
-                throw new ArgumentOutOfRangeException(parameterName, "Player indices must be 0 and 1.");
+            if (!matchRunning) return;
+            deathPending = true; DisablePlayers();
+            // Death does not finish the match while children of the accepted shot are alive.
+            if (activeShot == null && !coordinating) BeginResolution();
         }
-
-        private void OnDisable()
+        private void OnDamageApplied(ShotContext shot, HealthComponent target, float actual)
         {
-            if (matchRunning && gameManager != null)
-                EndMatch();
+            if (!matchRunning || activeShot != shot || shot.IsCancelled || actual <= 0f) return;
+            int owner = shot.OwnerPlayerIndex;
+            if (owner < 0 || owner > 1 || target != health[1-owner]) return;
+            creditedDamage[owner] = Mathf.Min(startingHealth[1-owner], creditedDamage[owner] + actual);
+        }
+        public int GetScore(int playerIndex)
+        {
+            if (playerIndex < 0 || playerIndex > 1) throw new ArgumentOutOfRangeException(nameof(playerIndex));
+            if (scoresFinalized) return finalScores[playerIndex];
+            if (EndReason == MatchEndReason.Cancelled || (EndReason == MatchEndReason.Surrender && FinalResult != null && FinalResult.LoserPlayerIndex == playerIndex)) return 0;
+            int score = Mathf.FloorToInt(creditedDamage[playerIndex] + .0001f);
+            if (FinalResult == null) return score;
+            if (FinalResult.IsDraw) return score + Rules.drawScore;
+            if (FinalResult.WinnerPlayerIndex == playerIndex)
+                score += Rules.winScore + Mathf.FloorToInt(Rules.survivalScore * Mathf.Clamp01(health[playerIndex].CurrentHealth / health[playerIndex].MaxHealth));
+            return score;
+        }
+        public void Surrender(int playerIndex = 0)
+        {
+            if (!matchRunning) return;
+            if (playerIndex < 0 || playerIndex > 1) throw new ArgumentOutOfRangeException(nameof(playerIndex));
+            FinalResult = new MatchResult(1-playerIndex, playerIndex); FinishMatch(MatchEndReason.Surrender);
+        }
+        public void EndMatch()
+        {
+            if (!matchRunning || matchEndedNotified || endingMatch) return;
+            FinalResult = null; FinishMatch(MatchEndReason.Cancelled);
+        }
+        private void FinishMatch(MatchEndReason reason)
+        {
+            if (endingMatch || matchEndedNotified) return;
+            endingMatch = true; matchRunning = false; EndReason = reason;
+            finalScores[0] = GetScore(0); finalScores[1] = GetScore(1); scoresFinalized = true;
+            try
+            {
+                Unsubscribe(); SetPaused(false);
+                if (activeShot != null) activeShot.Cancel();
+                activeShot = null; DisablePlayers();
+                matchEndedNotified = true;
+                var errors = new List<Exception>();
+                try { gameManager.ChangeState(MatchState.MatchEnded); } catch (Exception e) { errors.Add(e); }
+                if (MatchEnded != null) foreach (Action<MatchResult> handler in MatchEnded.GetInvocationList())
+                    try { handler(FinalResult); } catch (Exception e) { errors.Add(e); }
+                if (errors.Count > 0) throw new AggregateException(errors);
+            }
+            finally { endingMatch = false; }
+        }
+        public void SetPaused(bool value)
+        {
+            if (value == IsPaused || (value && !matchRunning)) return;
+            IsPaused = value;
+            if (value) { savedTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f; Time.timeScale = 0f; DisablePlayers(); }
             else
             {
-                DetachProjectile();
-                UnsubscribeHealth();
-                DisablePlayers();
+                Time.timeScale = savedTimeScale;
+                if (matchRunning && gameManager != null && gameManager.CurrentState == MatchState.TurnActive && !deathPending)
+                    players[CurrentPlayerIndex].EnableControl();
             }
         }
+        private void OnApplicationPause(bool pause) { if (pause) SetPaused(true); }
+        private void OnApplicationFocus(bool focus) { if (!focus) SetPaused(true); }
+        private void DisablePlayers()
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                var player = players[i];
+                if (player != null && (!(player is UnityEngine.Object obj) || obj != null)) player.DisableControl();
+                if (motors[i] != null) motors[i].Stop();
+            }
+        }
+        private void Unsubscribe()
+        {
+            ExplosionDamage.DamageApplied -= OnDamageApplied;
+            for (int i = 0; i < 2; i++) if (health[i] != null) health[i].Died -= OnPlayerDied;
+        }
+        private void ValidateRegistration()
+        {
+            if (gameManager == null || turnManager == null) throw new InvalidOperationException("Initialize managers first.");
+            for (int i = 0; i < 2; i++) { ValidatePlayer(players[i]); if (players[i].PlayerIndex != i || health[i] == null) throw new InvalidOperationException("Both player/health registrations are required."); }
+            if (health[0] == health[1]) throw new InvalidOperationException("Players require distinct health components.");
+        }
+        private static void ValidatePlayer(IPlayerController player)
+        {
+            if (player == null || (player is UnityEngine.Object obj && obj == null) || player.PlayerIndex < 0 || player.PlayerIndex > 1)
+                throw new ArgumentException("Players must have valid indices 0 and 1.");
+        }
+        private void OnDisable() { if (matchRunning) EndMatch(); else { Unsubscribe(); SetPaused(false); } }
+        private void OnDestroy() { Unsubscribe(); if (fallbackRules != null) Destroy(fallbackRules); }
     }
 }

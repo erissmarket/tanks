@@ -1,0 +1,23 @@
+PASS new profile starts at zero coins with Vanguard and light shield
+PASS win pays base plus capped performance; score remains separate
+PASS draw and defeat use separate rewards and counters
+PASS surrender and technical cancellation give no coins or progress
+PASS unreserved and repeated results cannot issue rewards
+PASS reward stays settled after loading save again
+PASS tank unlock checks wins and funds then charges once
+PASS heavy shield unlock requires two wins and deducts exact cost
+PASS saved loadout must be owned and shield-compatible
+PASS upgrade cost increases and fourth level is blocked
+PASS locked or unaffordable upgrades do not change level or balance
+PASS upgrade levels are independent for tanks and attributes
+PASS upgrade maxima modify stats without mutating base tank assets
+PASS purchased upgrades apply next match and do not heal active tank
+PASS loadout, unlocks, upgrades, theme and sound survive reload
+PASS corrupted primary recovers valid backup and preserves damaged file
+PASS unreadable primary and backup stay read-only without overwriting files
+PASS future save version stays intact and read-only
+PASS failed disk write cannot spend coins or upgrade in memory
+PASS interrupted battle pays nothing and old reservation cannot replay
+PASS real match-end event deposits coins exactly once
+PASS failed result save can retry once without losing or duplicating reward
+PASS all phase-four checks.

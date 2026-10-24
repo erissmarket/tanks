@@ -18,8 +18,8 @@ namespace TankGame.AI
         [SerializeField] private WeaponData weaponData = null;
         [SerializeField, Min(0f)] private float thinkDelay = 0.5f;
         [SerializeField, Range(0f, 10f)] private float angleErrorRange = 2f;
-        [SerializeField, Range(-180f, 180f)] private float minAimAngle = 10f;
-        [SerializeField, Range(-180f, 180f)] private float maxAimAngle = 170f;
+        [SerializeField, Range(0f, 90f)] private float minAimAngle = 10f;
+        [SerializeField, Range(0f, 90f)] private float maxAimAngle = 90f;
         private bool pendingShot;
         private bool firedThisTurn;
         private float fireTime;
@@ -72,6 +72,7 @@ namespace TankGame.AI
 
         private void Update()
         {
+            if (gameplayActions != null && gameplayActions.IsPaused) return;
             if (!pendingShot || firedThisTurn) return;
             if (!CanAct())
             {
@@ -135,11 +136,11 @@ namespace TankGame.AI
             if (float.IsNaN(thinkDelay) || float.IsInfinity(thinkDelay)) thinkDelay = 0.5f;
             if (float.IsNaN(angleErrorRange) || float.IsInfinity(angleErrorRange)) angleErrorRange = 2f;
             if (float.IsNaN(minAimAngle) || float.IsInfinity(minAimAngle)) minAimAngle = 10f;
-            if (float.IsNaN(maxAimAngle) || float.IsInfinity(maxAimAngle)) maxAimAngle = 170f;
+            if (float.IsNaN(maxAimAngle) || float.IsInfinity(maxAimAngle)) maxAimAngle = 90f;
             thinkDelay = Mathf.Max(0f, thinkDelay);
             angleErrorRange = Mathf.Clamp(angleErrorRange, 0f, 10f);
-            minAimAngle = Mathf.Clamp(minAimAngle, -180f, 180f);
-            maxAimAngle = Mathf.Clamp(maxAimAngle, minAimAngle, 180f);
+            minAimAngle = Mathf.Clamp(minAimAngle, 0f, 90f);
+            maxAimAngle = Mathf.Clamp(maxAimAngle, minAimAngle, 90f);
         }
     }
 }
