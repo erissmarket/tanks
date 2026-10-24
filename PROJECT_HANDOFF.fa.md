@@ -6,8 +6,13 @@
 
 مخزن: https://github.com/erissmarket/tanks
 
+پیش از دریافت پروژه، Git و Git LFS را نصب کنید؛ تصاویر و برخی دارایی‌های دودویی این مخزن با LFS نگهداری می‌شوند. دریافت فایل‌های pointer به‌جای تصاویر باعث ناقص‌شدن ظاهر پروژه می‌شود. پس از clone، دریافت دارایی‌ها را نیز انجام دهید:
+
 ```sh
+git lfs install
 git clone https://github.com/erissmarket/tanks.git
+cd tanks
+git lfs pull
 ```
 
 در Unity Hub پوشهٔ مخزن را با Unity **6000.5.10f1** باز کنید. وابستگی‌ها در `Packages/manifest.json` و `Packages/packages-lock.json` ثبت شده‌اند. پروژه دوبعدی و مبتنی بر URP، Unity Input System و Unity UI است. اولین بازکردن به دریافت بسته‌ها و واردکردن دارایی‌ها نیاز دارد.
