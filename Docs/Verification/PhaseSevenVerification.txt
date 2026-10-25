@@ -169,10 +169,10 @@ PASS matrix 166: bastion/heavy/theme-2/weapon-bouncy
 PASS matrix 167: bastion/heavy/theme-2/weapon-cluster
 PASS matrix 168: bastion/heavy/theme-2/weapon-digger
 PASS 168 combinations restore terrain and finish every projectile group
-PASS complete real-physics match: 10 shots, 10 turns, Elimination, reward 110, wins 1
+PASS complete real-physics match: 16 shots, 16 turns, Elimination, reward 110, wins 1
 PASS natural result persists once and setup preferences remain intact
 PASS return home leaves no projectile, damage label or impact effect
 PASS 200 impact bursts stay within the 64-effect budget
-METRICS peak projectiles=2, peak effects=53, allocated memory start=897479315, end=911635461, elapsed=86.6s; Editor figures are not phone performance measurements.
+METRICS peak projectiles=2, peak effects=53, allocated memory start=966238136, end=981406307, elapsed=78.2s; Editor figures are not phone performance measurements.
 PASS no runtime error, exception or assertion during qualification
 PASS all phase-seven checks (176 cases; matrix 168).

@@ -1,6 +1,6 @@
 # راهنمای کامل تحویل پروژهٔ Tank Battle
 
-این سند برای توسعه‌دهنده‌ای نوشته شده که پروژه را از GitHub دریافت می‌کند و می‌خواهد ساختار صحنه، آبجکت‌ها، قوانین بازی، دارایی‌ها و محل اتصال بک‌اند را بشناسد. مبنا، کد و صحنهٔ ذخیره‌شده در مخزن در تاریخ ۲۵ اکتبر ۲۰۲۶، پس از افزودن گدازه و کاهش تخریب زمین است. بخش فهرست آبجکت‌ها و مقادیر دارایی‌ها مستقیماً از فایل‌های پروژه استخراج شده است. جزئیات کامل این تغییر تازه در انتهای همین فایل نیز آمده است.
+این سند برای توسعه‌دهنده‌ای نوشته شده که پروژه را از GitHub دریافت می‌کند و می‌خواهد ساختار صحنه، آبجکت‌ها، قوانین بازی، دارایی‌ها و محل اتصال بک‌اند را بشناسد. مبنا، کد و صحنهٔ ذخیره‌شده در مخزن در تاریخ ۲۵ اکتبر ۲۰۲۶، پس از افزودن گدازه، کاهش تخریب زمین و اصلاح حرکت تانک‌ها است. بخش فهرست آبجکت‌ها و مقادیر دارایی‌ها مستقیماً از فایل‌های پروژه استخراج شده است. جزئیات کامل این تغییر تازه در انتهای همین فایل نیز آمده است.
 
 ## ۱. دریافت و اجرای پروژه
 
@@ -223,7 +223,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 
 ## ۱۱. آزمون‌ها، ساخت و محدودیت‌های تحویل
 
-گزارش‌های فازهای اول تا ششم به‌ترتیب ۱۹، ۱۶، ۱۳، ۲۲، ۲۰ و ۱۸ بررسی موفق دارند: جمعاً ۱۰۸ بررسی. فاز هفتم ۱۷۶ بررسی موفق، شامل ۱۶۸ ترکیب قانونی کلاس/سپر/محیط/سلاح دارد. یک مسابقهٔ واقعی پس از ۱۰ شلیک با حذف حریف پایان یافت؛ ثبت یک‌بارهٔ پاداش و پاک‌سازی تأیید شد. نسخهٔ مستقل ویندوز نیز هفت بررسی تکمیلی را با موفقیت گذراند.
+گزارش‌های فازهای اول تا ششم به‌ترتیب ۱۹، ۱۶، ۱۳، ۲۲، ۲۰ و ۱۸ بررسی موفق دارند: جمعاً ۱۰۸ بررسی. پس از اصلاح حرکت، بررسی‌های فازهای اول، دوم و سوم دوباره موفق بودند. فاز هفتم نیز با فیزیک جدید ۱۷۶ بررسی موفق، شامل ۱۶۸ ترکیب قانونی کلاس/سپر/محیط/سلاح دارد. آخرین مسابقهٔ واقعی پس از ۱۶ شلیک با حذف حریف پایان یافت؛ ثبت یک‌بارهٔ پاداش و پاک‌سازی تأیید شد. بررسی حرکت واقعی بازیکن و حریف و شیب، توقف، مسیر خطرناک و سقوط طبیعی نیز موفق بودند. نسخهٔ مستقل ویندوز قبلی هفت بررسی تکمیلی را گذرانده است و شامل اصلاح تازهٔ حرکت نیست.
 
 منوی `Tools > Tank Game` گزینه‌های هر فاز را دارد. آزمون فازهای پنجم، ششم و هفتم را از Edit Mode شروع کنید؛ برای تکرار مستقل آزمون‌ها بین آن‌ها از Play Mode خارج شوید. گزارش‌های تازه داخل `Library` تولید می‌شوند و نسخهٔ ثبت‌شدهٔ زمان تحویل در `Docs/Verification` قرار دارد.
 
@@ -237,6 +237,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 
 ## ۱۲. شرح هفت فاز و مستندات موجود
 
+- [Movement_Update.fa.md](Docs/Design/Movement_Update.fa.md)
 - [Phase01_Game_Rules.fa.md](Docs/Design/Phase01_Game_Rules.fa.md)
 - [Phase02_Weapons_Shields.fa.md](Docs/Design/Phase02_Weapons_Shields.fa.md)
 - [Phase03_Tanks_Garage.fa.md](Docs/Design/Phase03_Tanks_Garage.fa.md)
@@ -594,6 +595,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
   angleErrorRange: 2
   minAimAngle: 10
   maxAimAngle: 90
+  maximumRepositionDistance: 1.25
 ```
 
 ### Underground Lava → LavaHazard
@@ -1058,6 +1060,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | Assets/_Game/Art/Tanks/Editor/BuildTankArt.cs | ابزار Editor |
 | Assets/_Game/Art/Terrain/Editor/BuildRollingTerrain.cs | ابزار Editor |
 | Assets/_Game/Art/Weapons/Editor/ImportBasicShellIcon.cs | ابزار Editor |
+| Assets/_Game/Core/Editor/NaturalLavaFallVerification.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseFiveSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseFourSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseOneSetup.cs | ابزار Editor |
@@ -1065,6 +1068,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | Assets/_Game/Core/Editor/PhaseSixSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseThreeSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseTwoSetup.cs | ابزار Editor |
+| Assets/_Game/Core/Editor/TankMovementVerification.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/VolcanicSetup.cs | ابزار Editor |
 | Assets/_Game/Core/GameManager.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Core/GameplayActionController.cs | زمان اجرا / مدل / تست |
@@ -1172,6 +1176,12 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | SpriteRenderer #4169992478233334086 | m_Color.b | 0.3 | {fileID: 0} |
 | SpriteRenderer #4169992478233334086 | m_Color.g | 0.4 | {fileID: 0} |
 | SpriteRenderer #4169992478233334086 | m_Color.r | 1 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Mass | 4 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Constraints | 0 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Interpolate | 1 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_GravityScale | 2 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_AngularDamping | 5 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_CollisionDetection | 1 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.x | 5 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.y | -1.4 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.z | 0 | {fileID: 0} |
@@ -1186,6 +1196,8 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | WeaponController #9095673119330416512 | currentWeapon |  | {fileID: 11400000, guid: ee454cce595d0514bb30c03e11e432c5, type: 2} |
 
 - آبجکت/کامپوننت افزوده‌شده در صحنه: `Transform` با fileID `1012447819`.
+- آبجکت/کامپوننت افزوده‌شده در صحنه: `CapsuleCollider2D` با fileID `2024052222`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `BoxCollider2D` از `Assets/_Game/Prefabs/Mock/MockTank.prefab` با fileID پایهٔ `3306012168725440916`.
 
 ### Player0 — instance `223520933`
 
@@ -1198,6 +1210,12 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | MockTank #1956523670024084646 | m_Name | Player0 | {fileID: 0} |
 | HealthComponent #2923494590816955901 | shield |  | {fileID: 11400000, guid: 8b416fa7950da1945b63df0ac56bde8a, type: 2} |
 | Body #3857218022733174877 | m_IsActive | 0 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Mass | 4 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Constraints | 0 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_Interpolate | 1 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_GravityScale | 2 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_AngularDamping | 5 | {fileID: 0} |
+| Rigidbody2D #6758729485317028699 | m_CollisionDetection | 1 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.x | -5 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.y | -1.4 | {fileID: 0} |
 | Transform #8268840141615725777 | m_LocalPosition.z | 0 | {fileID: 0} |
@@ -1212,6 +1230,8 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | WeaponController #9095673119330416512 | currentWeapon |  | {fileID: 11400000, guid: ee454cce595d0514bb30c03e11e432c5, type: 2} |
 
 - آبجکت/کامپوننت افزوده‌شده در صحنه: `Transform` با fileID `970009294`.
+- آبجکت/کامپوننت افزوده‌شده در صحنه: `CapsuleCollider2D` با fileID `2075319053`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `BoxCollider2D` از `Assets/_Game/Prefabs/Mock/MockTank.prefab` با fileID پایهٔ `3306012168725440916`.
 
 ### TankVisual — instance `970009291`
 
@@ -1244,6 +1264,10 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | SpriteRenderer #7447849395859950022 | m_Color.r | 0.4 | {fileID: 0} |
 
 - آبجکت/کامپوننت افزوده‌شده در صحنه: `Transform` با fileID `291084910`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `TankMotor` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000003`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `TankAim` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `7869760380730157531`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `CapsuleCollider2D` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000002`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `Rigidbody2D` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000001`.
 
 ### TankVisual — instance `1012447818`
 
@@ -1277,6 +1301,10 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | SpriteRenderer #7447849395859950022 | m_Color.r | 0.9 | {fileID: 0} |
 
 - آبجکت/کامپوننت افزوده‌شده در صحنه: `Transform` با fileID `1750549423`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `TankMotor` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000003`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `TankAim` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `7869760380730157531`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `CapsuleCollider2D` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000002`.
+- کامپوننت حذف‌شده از این نمونهٔ صحنه: `Rigidbody2D` از `Assets/_Game/Art/Tanks/TankVisual.prefab` با fileID پایهٔ `902000001`.
 
 ### تنظیمات اسکریپت‌های متصل به نمونه‌های Prefab
 
@@ -1303,3 +1331,28 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 هفت بررسی اختصاصی موفق شدند: بودجهٔ Mesh، عمق گودی موشک و حفظ زمین دور، سقف گودی انفجار بسیار بزرگ، بازنشانی و ورودی نامعتبر، حفظ آسیب ۳۲ واحدی، توقف/شکست سقوط/پاشش یکتا و بازیابی تانک در مسابقهٔ بعد. ۱۹ بررسی قوانین، ۱۶ بررسی آسیب و سپر و ۱۷۶ بررسی فاز هفتم شامل تمام ۱۶۸ ترکیب قانونی نیز با کد جدید موفق بودند. خروجی ویندوز قبلی شامل این تغییر تازه نیست و APK نیز هنوز ساخته نشده است؛ در این مرحله اجرای داخل Unity بررسی شده است.
 
 گزینه‌های ویرایشگر در `Tools > Tank Game > Volcanic Update` قرار دارند. نصب از Edit Mode با `Install Lava and Balanced Craters` و آزمون جداگانه با `Verify Lava and Craters` انجام می‌شود. آزمون از ذخیرهٔ جدا در `Library/VolcanicTests` استفاده می‌کند. گزارش اصلی در `Library/VolcanicVerification.txt` و نسخهٔ ثبت‌شده در `Docs/Verification/VolcanicVerification.txt` قرار دارد.
+
+## پیوست خ: اصلاح حرکت بازیکن و حریف
+
+تاریخ: ۲۵ اکتبر ۲۰۲۶.
+
+تانک بازیکن با A/D و دکمه‌های چپ و راست در نوبت خودش حرکت می‌کند. حریف کامپیوتری نیز پیش از شلیک موقعیتش را تغییر می‌دهد: در فاصلهٔ زیاد پیشروی، در فاصلهٔ کم عقب‌نشینی و در فاصلهٔ میانی جابه‌جایی نوبتی را ترجیح می‌دهد. طول هدف حرکت فعلی حداکثر ۱٫۲۵ واحد و حداکثر ۶۰٪ بودجهٔ باقی‌ماندهٔ همان نوبت است. حرکت خارج از نوبت مجاز نیست.
+
+تست زنده نشان داد هر تانک صحنه یک Rigidbody روی ریشهٔ بازیکن و یکی روی فرزند `TankVisual` داشت. دو بدنه و برخوردگر روی هم قرار می‌گرفتند و ریشه به‌جای زمین با بدنهٔ خودش تماس داشت؛ حرکت واقعی و مصرف بودجه درست انجام نمی‌شد. در صحنهٔ `MVPIntegrated`، فیزیک هر تانک یکپارچه شد:
+
+- Rigidbody، TankMotor و TankAim مربوط به فرزند تصویری حذف شدند؛ نسخه‌های ریشهٔ بازیکن باقی ماندند.
+- برخوردگر Box قدیمی و Capsule فرزند با یک Capsule افقی روی ریشه جایگزین شدند: اندازهٔ ۱٫۷ در ۰٫۳۸ و offset برابر `(0, -0.31)`.
+- بدنهٔ ریشه Dynamic است، جرم ۴، ضریب جاذبهٔ ۲، damping زاویه‌ای ۵، درون‌یابی و تشخیص برخورد پیوسته دارد و چرخش قفل نیست.
+- شکل، رنگ و اجزای تصویری تانک تغییر نکردند. این تنظیم‌ها Override صحنه هستند؛ Prefab قدیمی Mock و Prefab مستقل TankVisual همچنان کاربرد تست/نمایش جداگانه دارند. هنگام قرار دادن TankVisual زیر یک تانک دارای فیزیک، بدنهٔ فیزیکی دوم اضافه نکنید.
+
+`SimpleArtilleryAI` مسیر کامل و فضای زیر شنی‌ها را با فاصله‌های نمونه‌برداری حدود ۰٫۱۵ واحد بررسی می‌کند. مسیر خیلی شیب‌دار، افت عمیق، نزدیکی گدازه، خروج از محدوده و رسیدن بیش از حد به حریف رد می‌شوند. اگر مسیر اول مناسب نباشد، مسیر کوتاه‌تر یا جهت دیگر امتحان می‌شود. بدون مسیر امن، حریف همان‌جا می‌ایستد و شلیک می‌کند. این برنامه‌ریز محلی است و مسیر‌یابی کامل یا تضمین زنده‌ماندن در برابر تخریب هم‌زمان زمین نیست.
+
+حرکت با رسیدن به مقصد، پایان بودجه، ناامن‌شدن مسیر یا پایان مهلت حرکت متوقف می‌شود. پس از حدود ۰٫۲ ثانیه توقف، هدف‌گیری از محل جدید و با دادهٔ سلاح واقعاً مجهزشده محاسبه می‌شود. توقف بازی حرکت و شلیک را منجمد می‌کند؛ تغییر نوبت و غیرفعال‌کردن AI نیز فرمان حرکت را پاک می‌کند.
+
+آزمون `Tools > Tank Game > Movement > Verify Player and Enemy Movement` از Edit Mode و با ذخیرهٔ جدا اجرا می‌شود. در تست واقعی، بازیکن ۱٫۱۳ واحد و حریف ۱٫۱۸ واحد حرکت کردند، بودجه مصرف شد و حریف پس از توقف دقیقاً یک تیر شلیک کرد. تک‌بدنه‌بودن، مجوز نوبت، توقف، بازگشت کنترل و رد مسیر گودی/مرز/ورودی نامعتبر نیز بررسی شدند. گزارش در `Library/MovementVerification.txt` نوشته می‌شود.
+
+گزینهٔ `Unify Tank Physics` در همان منو تنظیمات بدنهٔ یکپارچه را روی صحنهٔ اصلی اعمال می‌کند. برای اجرای عادی نیازی به نصب دوباره نیست؛ صحنهٔ اصلاح‌شده ذخیره شده است. خروجی اجرایی ویندوز قبلی این تغییر تازه را ندارد و برای توزیع نسخهٔ اجرایی باید دوباره ساخته شود.
+
+پس از این اصلاح، بررسی‌های قوانین، آسیب و سپر و کلاس‌های تانک به‌ترتیب ۱۹، ۱۶ و ۱۳ مورد موفق داشتند. تست‌های شیب و سقوط، هفت بررسی گدازه و ۱۷۶ بررسی فاز هفتم شامل همهٔ ۱۶۸ ترکیب نیز موفق شدند. مسابقهٔ کامل جدید پس از ۱۶ شلیک با حذف حریف تمام شد و پاداش یک‌بار ثبت شد.
+
+ابزار `Verify Natural Gravity Fall` در منوی Volcanic Update نیز ثبت شده است. این تست فقط زمین زیر تانک را با گودی‌های هم‌اندازهٔ گودی موشک خالی می‌کند و اجازه می‌دهد Rigidbody بدون جابه‌جایی دستی یا تغییر مستقیم جان سقوط کند. سقوط و شکست ناشی از گدازه با بدنهٔ یکپارچه تأیید شدند. این آزمایش، تعداد شلیک‌های لازم یا میزان وقوع سقوط در نبرد عادی را اندازه نمی‌گیرد؛ گزارش آن در `Docs/Verification/NaturalLavaFallVerification.txt` قرار دارد.

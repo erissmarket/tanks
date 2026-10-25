@@ -1,0 +1,6 @@
+PASS slope=0, mirrored=False, distance=5.39, rotation=0.00, firstSpeed=0.14
+PASS slope=20, mirrored=False, distance=5.06, rotation=20.00, firstSpeed=0.14
+PASS slope=-20, mirrored=False, distance=5.06, rotation=-20.00, firstSpeed=0.14
+PASS slope=20, mirrored=True, distance=5.06, rotation=20.00, firstSpeed=0.14
+PASS airborne gravity and Stop preserves falling velocity.
+PASS: all physics checks completed in isolated 2D physics scenes.

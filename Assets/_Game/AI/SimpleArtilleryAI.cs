@@ -2,6 +2,9 @@ using System;
 using TankGame.Core;
 using TankGame.Data;
 using TankGame.Player;
+using TankGame.Tank;
+using TankGame.Terrain;
+using TankGame.Weapons;
 using UnityEngine;
 
 namespace TankGame.AI
@@ -20,9 +23,19 @@ namespace TankGame.AI
         [SerializeField, Range(0f, 10f)] private float angleErrorRange = 2f;
         [SerializeField, Range(0f, 90f)] private float minAimAngle = 10f;
         [SerializeField, Range(0f, 90f)] private float maxAimAngle = 90f;
+        [SerializeField, Min(0f)] private float maximumRepositionDistance = 1.25f;
         private bool pendingShot;
         private bool firedThisTurn;
+        private bool movementPlanned, moving;
         private float fireTime;
+        private float destinationX, moveDeadline;
+        private TankMotor motor;
+        private WeaponController weapons;
+        private MatchFlowController match;
+        private DestructibleTerrain terrain;
+        private LavaHazard lava;
+        public bool IsMoving => moving;
+        public float DestinationX => destinationX;
 
         private void Start()
         {
@@ -31,6 +44,7 @@ namespace TankGame.AI
                 || weaponData.ProjectilePrefab == null || weaponData.ProjectilePrefab.GetComponent<Rigidbody2D>() == null)
                 throw new InvalidOperationException("Assign all SimpleArtilleryAI references and a physics projectile weapon.");
             ValidateConfiguration();
+            CacheMovementReferences();
             ScheduleTurn();
         }
 
@@ -46,12 +60,14 @@ namespace TankGame.AI
         private void OnDisable()
         {
             pendingShot = false;
+            StopMovement();
             if (gameManager != null) gameManager.StateChanged -= OnStateChanged;
         }
 
         private void OnStateChanged(MatchState previous, MatchState current)
         {
             pendingShot = false;
+            StopMovement();
             if (current == MatchState.TurnActive) ScheduleTurn();
         }
 
@@ -59,6 +75,7 @@ namespace TankGame.AI
         {
             if (!CanAct()) return;
             firedThisTurn = false;
+            movementPlanned = false;
             pendingShot = true;
             fireTime = Time.time + thinkDelay;
         }
@@ -77,9 +94,28 @@ namespace TankGame.AI
             if (!CanAct())
             {
                 pendingShot = false;
+                StopMovement();
                 return;
             }
             if (Time.time < fireTime) return;
+
+            if (!movementPlanned)
+            {
+                movementPlanned = true;
+                if (PlanMovement()) return;
+            }
+            if (moving)
+            {
+                float delta = destinationX - playerController.transform.position.x;
+                if (Mathf.Abs(delta) > .08f && motor.RemainingMovement > .05f
+                    && Time.time < moveDeadline && match.RemainingTurnSeconds > 1f && CanTraverseTo(destinationX))
+                {
+                    gameplayActions.Move(playerController.PlayerIndex, Mathf.Sign(delta));
+                    return;
+                }
+                StopMovement(); fireTime = Time.time + .20f;
+                return;
+            }
 
             pendingShot = false;
             firedThisTurn = true;
@@ -98,13 +134,80 @@ namespace TankGame.AI
             gameplayActions.Fire(index, (Vector2)muzzle.TransformVector(Vector3.right).normalized);
         }
 
+        private void CacheMovementReferences()
+        {
+            if (playerController == null) return;
+            motor = playerController.GetComponent<TankMotor>();
+            weapons = playerController.GetComponent<WeaponController>();
+            match = FindAnyObjectByType<MatchFlowController>();
+            terrain = FindAnyObjectByType<DestructibleTerrain>();
+            lava = FindAnyObjectByType<LavaHazard>();
+        }
+
+        private bool PlanMovement()
+        {
+            if (motor == null || match == null || target == null || terrain == null
+                || motor.RemainingMovement < .3f || match.RemainingTurnSeconds < 3f) return false;
+            float currentX = playerController.transform.position.x;
+            float toward = Mathf.Sign(target.position.x - currentX);
+            float gap = Mathf.Abs(target.position.x - currentX);
+            float preferred = gap > 7f ? toward : gap < 4.5f ? -toward
+                : ((match.CompletedTurns / 2) % 2 == 0 ? toward : -toward);
+            float distance = Mathf.Min(maximumRepositionDistance, motor.RemainingMovement * .6f);
+            for (int side = 0; side < 2; side++)
+                for (float step = distance; step >= .30f; step -= .30f)
+                {
+                    float candidate = currentX + preferred * (side == 0 ? 1 : -1) * step;
+                    if (Mathf.Abs(candidate - target.position.x) < 3.5f || !CanTraverseTo(candidate)) continue;
+                    destinationX = candidate; moving = true; moveDeadline = Time.time + 1.8f;
+                    gameplayActions.Move(playerController.PlayerIndex, Mathf.Sign(candidate - currentX));
+                    return true;
+                }
+            return false;
+        }
+
+        // Inspect the whole route and track footprint, rather than only its destination.
+        public bool CanTraverseTo(float x)
+        {
+            if (!float.IsFinite(x) || terrain == null || match == null || playerController == null) return false;
+            float start = playerController.transform.position.x;
+            var hull = playerController.GetComponent<Collider2D>();
+            float halfWidth = hull != null && hull.enabled ? hull.bounds.extents.x : .85f;
+            var bounds = terrain.GetComponent<SpriteRenderer>().bounds;
+            if (x < match.Rules.minimumX || x > match.Rules.maximumX
+                || Mathf.Min(start, x) - halfWidth < bounds.min.x || Mathf.Max(start, x) + halfWidth > bounds.max.x) return false;
+            int samples = Mathf.Max(1, Mathf.CeilToInt(Mathf.Abs(x - start) / .15f));
+            float previous = terrain.SurfaceHeightAt(start);
+            for (int i = 0; i <= samples; i++)
+            {
+                float px = Mathf.Lerp(start, x, (float)i / samples);
+                float height = terrain.SurfaceHeightAt(px);
+                float spacing = Mathf.Max(.02f, Mathf.Abs(x - start) / samples);
+                if (i > 0 && Mathf.Abs(height - previous) > spacing * .84f + .025f) return false;
+                for (int foot = -1; foot <= 1; foot++)
+                {
+                    float support = terrain.SurfaceHeightAt(px + foot * halfWidth * .8f);
+                    if (Mathf.Abs(support - height) > .42f || (lava != null && support <= lava.SurfaceY + .3f)) return false;
+                }
+                previous = height;
+            }
+            return true;
+        }
+
+        private void StopMovement()
+        {
+            moving = false;
+            if (motor != null) motor.Stop();
+        }
+
         private float CalculateLocalAimAngle()
         {
             Vector2 displacement = target.position - muzzle.position;
             float horizontal = Mathf.Abs(displacement.x);
-            float gravityScale = weaponData.ProjectilePrefab.GetComponent<Rigidbody2D>().gravityScale;
+            var shotWeapon = weapons != null && weapons.CurrentWeapon != null ? weapons.CurrentWeapon : weaponData;
+            float gravityScale = shotWeapon.ProjectilePrefab.GetComponent<Rigidbody2D>().gravityScale;
             double gravity = -Physics2D.gravity.y * gravityScale;
-            double speedSquared = (double)weaponData.LaunchSpeed * weaponData.LaunchSpeed;
+            double speedSquared = (double)shotWeapon.LaunchSpeed * shotWeapon.LaunchSpeed;
             float elevation = 45f;
             if (horizontal < 0.01f)
             {
@@ -141,6 +244,7 @@ namespace TankGame.AI
             angleErrorRange = Mathf.Clamp(angleErrorRange, 0f, 10f);
             minAimAngle = Mathf.Clamp(minAimAngle, 0f, 90f);
             maxAimAngle = Mathf.Clamp(maxAimAngle, minAimAngle, 90f);
+            maximumRepositionDistance = float.IsFinite(maximumRepositionDistance) ? Mathf.Clamp(maximumRepositionDistance, 0f, 2.5f) : 1.25f;
         }
     }
 }
