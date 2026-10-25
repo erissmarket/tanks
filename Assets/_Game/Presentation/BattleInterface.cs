@@ -28,7 +28,7 @@ namespace TankGame.Presentation
             turnText=InterfaceLayout.Label(header,"Turn","",new Vector2(0,47),new Vector2(620,114),34);
             InterfaceLayout.Button(header,"Pause","PAUSE",new Vector2(0,-60),new Vector2(210,80),pause);
             var footer=InterfaceLayout.Rect(transform,"Battle Controls",new Vector2(.5f,0),new Vector2(0,24),new Vector2(1824,218));footer.pivot=new Vector2(.5f,0);
-            var backing=footer.gameObject.AddComponent<Image>();backing.color=new Color(.04f,.075f,.10f,.92f);
+            var backing=footer.gameObject.AddComponent<Image>();backing.color=new Color(.04f,.075f,.10f,.62f);
             var dockFit=footer.gameObject.AddComponent<FitInterfacePanel>();dockFit.designSize=footer.sizeDelta;
             InterfaceLayout.Label(footer,"Move label","MOVE",new Vector2(-770,61),new Vector2(280,48),32);
             left=Hold(footer,"Move Left","LEFT",new Vector2(-840,-39),0);

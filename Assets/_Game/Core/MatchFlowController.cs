@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TankGame.Player;
 using TankGame.Projectiles;
 using TankGame.Tank;
+using TankGame.Terrain;
 using UnityEngine;
 
 namespace TankGame.Core
@@ -10,6 +11,7 @@ namespace TankGame.Core
     public sealed class MatchFlowController : MonoBehaviour
     {
         [SerializeField] private MatchRules rules;
+        [SerializeField] private LavaHazard lava;
         private MatchRules fallbackRules;
         private GameManager gameManager;
         private TurnManager turnManager;
@@ -121,8 +123,14 @@ namespace TankGame.Core
             if (!matchRunning || IsPaused || coordinating || endingMatch) return;
             for (int i = 0; i < 2; i++)
             {
-                if (health[i] != null && health[i].CurrentHealth > 0f && health[i].transform.position.y < Rules.killY)
-                { fallen[i] = true; health[i].Eliminate(); }
+                if (health[i] == null || health[i].CurrentHealth <= 0f) continue;
+                bool inLava = lava != null && lava.isActiveAndEnabled && lava.Contains(health[i]);
+                if (inLava || health[i].transform.position.y < Rules.killY)
+                {
+                    fallen[i] = true;
+                    if (inLava) lava.Engulf(health[i]);
+                    health[i].Eliminate();
+                }
             }
             if (!matchRunning) return;
             if (gameManager.CurrentState == MatchState.TurnActive)

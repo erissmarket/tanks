@@ -8,6 +8,9 @@ namespace TankGame.Terrain
     {
         [SerializeField] private SpriteRenderer grassRenderer;
         [SerializeField, Min(0.01f)] private float scorchWidth = 0.16f;
+        [SerializeField, Range(.1f, 1f)] private float blastCraterScale = .36f;
+        [SerializeField, Range(.1f, 1f)] private float blastDepthFraction = .55f;
+        [SerializeField, Min(.1f)] private float maximumBlastCraterRadius = .85f;
         private SpriteRenderer soilRenderer;
         private PolygonCollider2D groundCollider;
         private Texture2D soilTexture, grassTexture;
@@ -26,6 +29,14 @@ namespace TankGame.Terrain
         private void Awake() => InitializeSurface();
 
         public void Configure(SpriteRenderer grass) { grassRenderer = grass; }
+
+        // Blast reach is a damage rule; terrain erosion has its own smaller budget.
+        public bool CarveExplosion(Vector2 center, float blastRadius)
+        {
+            if (!float.IsFinite(blastRadius) || blastRadius <= 0f) return false;
+            float radius = Mathf.Min(blastRadius * blastCraterScale, maximumBlastCraterRadius);
+            return Carve(center + Vector2.up * radius * (1f - blastDepthFraction), radius);
+        }
 
         private void InitializeSurface()
         {

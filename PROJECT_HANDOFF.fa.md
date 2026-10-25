@@ -1,12 +1,12 @@
 # راهنمای کامل تحویل پروژهٔ Tank Battle
 
-این سند برای توسعه‌دهنده‌ای نوشته شده که پروژه را از GitHub دریافت می‌کند و می‌خواهد ساختار صحنه، آبجکت‌ها، قوانین بازی، دارایی‌ها و محل اتصال بک‌اند را بشناسد. مبنا، کد و صحنهٔ ذخیره‌شده در مخزن در تاریخ ۲۴ اکتبر ۲۰۲۶ است. بخش فهرست آبجکت‌ها و مقادیر دارایی‌ها مستقیماً از فایل‌های پروژه استخراج شده است.
+این سند برای توسعه‌دهنده‌ای نوشته شده که پروژه را از GitHub دریافت می‌کند و می‌خواهد ساختار صحنه، آبجکت‌ها، قوانین بازی، دارایی‌ها و محل اتصال بک‌اند را بشناسد. مبنا، کد و صحنهٔ ذخیره‌شده در مخزن در تاریخ ۲۵ اکتبر ۲۰۲۶، پس از افزودن گدازه و کاهش تخریب زمین است. بخش فهرست آبجکت‌ها و مقادیر دارایی‌ها مستقیماً از فایل‌های پروژه استخراج شده است. جزئیات کامل این تغییر تازه در انتهای همین فایل نیز آمده است.
 
 ## ۱. دریافت و اجرای پروژه
 
 مخزن: https://github.com/erissmarket/tanks
 
-پیش از دریافت پروژه، Git و Git LFS را نصب کنید؛ تصاویر و برخی دارایی‌های دودویی این مخزن با LFS نگهداری می‌شوند. دریافت فایل‌های pointer به‌جای تصاویر باعث ناقص‌شدن ظاهر پروژه می‌شود. پس از clone، دریافت دارایی‌ها را نیز انجام دهید:
+Git و Git LFS باید نصب باشند؛ تصاویر و برخی دارایی‌های دودویی این مخزن با LFS نگهداری می‌شوند. برای دریافت کامل دارایی‌ها:
 
 ```sh
 git lfs install
@@ -180,7 +180,9 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 
 ## ۷. زمین و فیزیک
 
-`DestructibleTerrain` سطح قابل‌تغییر، Sprite/بافت زمان اجرا و برخوردگر زمین را مدیریت می‌کند. `Carve(center, radius)` در برخورد انفجار، فرورفتگی و اثر تیرهٔ خاک ایجاد می‌کند. `SurfaceHeightAt(x)` ارتفاع سطح را می‌دهد و `ResetSurface()` زمین اولیه را برای مسابقهٔ بعد برمی‌گرداند. موتور تانک با سطح و شیب هماهنگ می‌شود. مدل سطح از نوع ارتفاع بر حسب x است؛ هندسهٔ تونل دلخواه سه‌بعدی یا غار مستقل فرض نشود.
+`DestructibleTerrain` سطح قابل‌تغییر، Sprite/بافت زمان اجرا و برخوردگر زمین را مدیریت می‌کند. انفجار از `CarveExplosion(center, blastRadius)` استفاده می‌کند؛ این متد شعاع گودی را به ۳۶٪ شعاع آسیب، حداکثر ۰٫۸۵ واحد و عمق مرکزی در برخورد سطحی را به حدود ۵۵٪ شعاع گودی محدود می‌کند. متد پایهٔ `Carve(center, radius)` برای تغییر مستقیم هندسه و حفاری باقی است. `SurfaceHeightAt(x)` ارتفاع سطح را می‌دهد و `ResetSurface()` زمین اولیه را برای مسابقهٔ بعد برمی‌گرداند. موتور تانک با سطح و شیب هماهنگ می‌شود. مدل سطح از نوع ارتفاع بر حسب x است؛ هندسهٔ تونل دلخواه سه‌بعدی یا غار مستقل فرض نشود.
+
+آبجکت `Underground Lava` با کامپوننت `LavaHazard` در ارتفاع جهانی `-3.85` قرار دارد. جریان، موج و ذرات روشن با یک Mesh متحرک ۸۶۴ رأسی نمایش داده می‌شوند. ارجاع `MatchFlowController.lava` به همین آبجکت وصل است؛ تماس تانک با سطح مذاب شکست از نوع `Fall` همراه پاشش و فرو رفتن بدنه ایجاد می‌کند. توقف بازی و بازیابی تانک در مسابقهٔ بعد نیز بررسی شده‌اند.
 
 سه محیط چمن، برف و سنگ با `TerrainThemeDefinition` و `TerrainThemeController` مدیریت می‌شوند. انتخاب ظاهر به‌تنهایی نباید منطق نبرد را عوض کند؛ شروع مسابقهٔ تازه سطح را بازنشانی می‌کند. تغییر تم در همان زمین، ظاهر را عوض می‌کند. دارایی‌های واقعی محیط در فهرست دارایی‌های پیوست آمده‌اند.
 
@@ -225,7 +227,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 
 منوی `Tools > Tank Game` گزینه‌های هر فاز را دارد. آزمون فازهای پنجم، ششم و هفتم را از Edit Mode شروع کنید؛ برای تکرار مستقل آزمون‌ها بین آن‌ها از Play Mode خارج شوید. گزارش‌های تازه داخل `Library` تولید می‌شوند و نسخهٔ ثبت‌شدهٔ زمان تحویل در `Docs/Verification` قرار دارد.
 
-برای ساخت: صحنهٔ اصلی را باز کنید، از منوی Phase Seven گزینهٔ `Prepare Delivery Scene` و سپس `Build Windows Test Version` را بزنید. خروجی `Builds/Windows/TankBattle.exe` است. کل پوشهٔ Windows باید تحویل داده شود؛ EXE به‌تنهایی کافی نیست. ساخت بررسی‌شده با صفر خطا، اندازهٔ گزارش‌شدهٔ ۱۵۲٬۸۴۵٬۲۹۴ بایت و زمان حدود پنج دقیقه و ۲۵ ثانیه انجام شد. Unity تعداد ۴۸۶ هشدار ثبت کرد؛ هشدارهای شیدر و متغیر قدیمی استفاده‌نشده در کنسول مشاهده شدند. این خروجی نسخهٔ آزمایشی است.
+برای ساخت: صحنهٔ اصلی را باز کنید، از منوی Phase Seven گزینهٔ `Prepare Delivery Scene` و سپس `Build Windows Test Version` را بزنید. خروجی `Builds/Windows/TankBattle.exe` است. کل پوشهٔ Windows باید تحویل داده شود؛ EXE به‌تنهایی کافی نیست. ساخت ثبت‌شدهٔ ۲۴ اکتبر با صفر خطا، اندازهٔ گزارش‌شدهٔ ۱۵۲٬۸۴۵٬۲۹۴ بایت و زمان حدود پنج دقیقه و ۲۵ ثانیه انجام شد. Unity تعداد ۴۸۶ هشدار ثبت کرد؛ هشدارهای شیدر و متغیر قدیمی استفاده‌نشده در کنسول مشاهده شدند. این خروجی آزمایشی پیش از تغییر گدازه ساخته شده است؛ برای فایل اجرایی حاوی تغییرات ۲۵ اکتبر، دوباره خروجی بسازید. گدازه و تنظیم جدید زمین در Unity بررسی شده‌اند.
 
 آزمون خودکار نسخهٔ مستقل با `TankBattle.exe --tank-smoke D:/TankQualification` انجام می‌شود. پنجرهٔ برنامه را به‌صورت عادی باز کنید؛ شروعِ کاملاً مخفی در بررسی حاضر آزمون را آغاز نکرد. این حالت از پروفایل جدا استفاده می‌کند و در پایان بسته می‌شود. کد خروج صفر موفقیت و یک شکست است. اجرای عادی بدون آرگومان وارد منوی بازی می‌شود.
 
@@ -242,6 +244,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 - [Phase05_Interface.fa.md](Docs/Design/Phase05_Interface.fa.md)
 - [Phase06_Feedback.fa.md](Docs/Design/Phase06_Feedback.fa.md)
 - [Phase07_Delivery.fa.md](Docs/Design/Phase07_Delivery.fa.md)
+- [Volcanic_Update.fa.md](Docs/Design/Volcanic_Update.fa.md)
 
 راهنماهای قدیمی سلاح نیز در ریشه قرار دارند: `PROJECTILES_SYSTEM_GUIDE.md` و `WEAPONS_VISUAL_ASSETS_GUIDE.md`. در تعارض با نسخه‌های قدیمی، کد و دارایی فعلی و گزارش این تحویل مبنا هستند.
 
@@ -332,6 +335,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | Systems/Progression | 667380912 | 1 / 0 | Transform, ProgressionController |
 | Systems/SimpleArtilleryAI | 732972017 | 1 / 0 | Transform, SimpleArtilleryAI |
 | Systems/TurnManager | 1302739949 | 1 / 0 | Transform, TurnManager |
+| Underground Lava | 765233045 | 1 / 0 | Transform, LavaHazard |
 
 ## پیوست ب: تنظیمات و ارجاع‌های اسکریپت‌های صحنه
 
@@ -368,6 +372,9 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 ```yaml
   grassRenderer: {fileID: 906547727} # SpriteRenderer
   scorchWidth: 0.16
+  blastCraterScale: 0.36
+  blastDepthFraction: 0.55
+  maximumBlastCraterRadius: 0.85
 ```
 
 ### MVP HUD → IntegratedHud
@@ -560,6 +567,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 
 ```yaml
   rules: {fileID: 11400000, guid: 78839375472c2ef47957a9fd5bde7609, type: 2} # Assets/_Game/Data/DefaultMatchRules.asset
+  lava: {fileID: 765233046} # LavaHazard
 ```
 
 ### Systems/Progression → ProgressionController
@@ -586,6 +594,17 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
   angleErrorRange: 2
   minAimAngle: 10
   maxAimAngle: 90
+```
+
+### Underground Lava → LavaHazard
+
+```yaml
+  lavaMaterial: {fileID: 2100000, guid: b334c3b629b27544397d05b5d1795d31, type: 2} # Assets/_Game/Presentation/Assets/BattleEffects.mat
+  match: {fileID: 1867302567} # MatchFlowController
+  surfaceY: -3.85
+  left: -10
+  right: 10
+  bottom: -5.8
 ```
 
 ## پیوست پ: نمونه‌های Prefab
@@ -838,9 +857,9 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 `DiggerImpactHandler`
 
 ```yaml
-  digSteps: 6
-  digStepDistance: 0.35
-  digCarveRadius: 0.5
+  digSteps: 4
+  digStepDistance: 0.25
+  digCarveRadius: 0.34
   digStepInterval: 0.05
   alignAlongVelocity: 1
   explodeOnDirectTankHit: 1
@@ -1046,6 +1065,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | Assets/_Game/Core/Editor/PhaseSixSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseThreeSetup.cs | ابزار Editor |
 | Assets/_Game/Core/Editor/PhaseTwoSetup.cs | ابزار Editor |
+| Assets/_Game/Core/Editor/VolcanicSetup.cs | ابزار Editor |
 | Assets/_Game/Core/GameManager.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Core/GameplayActionController.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Core/HealthComponent.cs | زمان اجرا / مدل / تست |
@@ -1098,6 +1118,7 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 | Assets/_Game/Terrain/Editor/CraterAndAimSetup.cs | ابزار Editor |
 | Assets/_Game/Terrain/Editor/OpenMVPSceneHelper.cs | ابزار Editor |
 | Assets/_Game/Terrain/Editor/TerrainThemeSetup.cs | ابزار Editor |
+| Assets/_Game/Terrain/LavaHazard.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Terrain/TerrainThemeController.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Terrain/TerrainThemeDefinition.cs | زمان اجرا / مدل / تست |
 | Assets/_Game/Testing/BackendTestBootstrap.cs | زمان اجرا / مدل / تست |
@@ -1266,3 +1287,19 @@ MatchEnded → ProgressionController → ProgressStore → به‌روزرسان
 - `WeaponController` با fileID صحنهٔ `1487234972` مرجع stripped به کامپوننت Prefab است؛ مقادیر پایه در Prefab و تغییرات در جدول Override همان نمونه آمده‌اند.
 - `TankAim` با fileID صحنهٔ `1823342653` مرجع stripped به کامپوننت Prefab است؛ مقادیر پایه در Prefab و تغییرات در جدول Override همان نمونه آمده‌اند.
 - `HealthComponent` با fileID صحنهٔ `1823342655` مرجع stripped به کامپوننت Prefab است؛ مقادیر پایه در Prefab و تغییرات در جدول Override همان نمونه آمده‌اند.
+
+## پیوست ح: جزئیات کامل به‌روزرسانی گدازه و تخریب زمین
+
+تاریخ: ۲۵ اکتبر ۲۰۲۶.
+
+زیر مسیر نبرد، آبجکت `Underground Lava` با کامپوننت `LavaHazard` اضافه شد. سطح گدازه در ارتفاع جهانی `-3.85` قرار دارد؛ موج‌های کوچک، جریان رنگ و ذرات روشن با یک Mesh محدود به ۸۶۴ رأس متحرک ساخته می‌شوند. بافت جدید یا آبجکت ذره در هر فریم ساخته نمی‌شود. متریال افکت موجود صریحاً در صحنه ارجاع داده شده است.
+
+تماس پایین برخوردگر تانک با سطح گدازه، از مسیر `MatchFlowController` سقوط ثبت می‌کند. سپر و زره جلوی این شکست را نمی‌گیرند. پاشش نارنجی و فرو رفتن تصویر تانک نمایش داده می‌شود. تصویر اصلی برای شروع مسابقهٔ بعد برمی‌گردد. توقف بازی، برخورد و انیمیشن را متوقف می‌کند. قانون سقوط قدیمی زیر ارتفاع `killY` همچنان برای خروج از میدان باقی است.
+
+تخریب انفجاری از آسیب به تانک جدا شد. `ExplosionDamage` برای زمین از `DestructibleTerrain.CarveExplosion` استفاده می‌کند؛ شعاع گودی برابر ۳۶٪ شعاع انفجار، حداکثر ۰٫۸۵ واحد و عمق مرکزی در برخورد سطحی حدود ۵۵٪ شعاع گودی است. بنابراین موشک با شعاع آسیب ۱٫۵، گودی تقریباً ۱٫۰۸ واحد پهنا و ۰٫۳۰ واحد عمق می‌سازد؛ قبلاً شعاع و عمق زمین از همان انفجار ۱٫۵ واحدی گرفته می‌شد. تیرهای قوی‌تر هنوز گودی بزرگ‌تری دارند و ضربه‌های تکراری می‌توانند زمین را تا گدازه پایین ببرند. مرز گودی و تیرگی خاک حفظ شده‌اند.
+
+متد پایهٔ `Carve` برای تغییر مستقیم هندسه و حفاری باقی است. Prefab تیر حفار از ۶ گام ۰٫۳۵ واحدی با شعاع ۰٫۵، به ۴ گام ۰٫۲۵ واحدی با شعاع ۰٫۳۴ تغییر کرد. آسیب، شعاع آسیب به تانک، نفوذ سپر و مهمات سلاح‌ها تغییر نکرده‌اند. پنل پایین نبرد کمی شفاف‌تر شده تا حرکت گدازه پشت کنترل‌ها دیده شود.
+
+هفت بررسی اختصاصی موفق شدند: بودجهٔ Mesh، عمق گودی موشک و حفظ زمین دور، سقف گودی انفجار بسیار بزرگ، بازنشانی و ورودی نامعتبر، حفظ آسیب ۳۲ واحدی، توقف/شکست سقوط/پاشش یکتا و بازیابی تانک در مسابقهٔ بعد. ۱۹ بررسی قوانین، ۱۶ بررسی آسیب و سپر و ۱۷۶ بررسی فاز هفتم شامل تمام ۱۶۸ ترکیب قانونی نیز با کد جدید موفق بودند. خروجی ویندوز قبلی شامل این تغییر تازه نیست و APK نیز هنوز ساخته نشده است؛ در این مرحله اجرای داخل Unity بررسی شده است.
+
+گزینه‌های ویرایشگر در `Tools > Tank Game > Volcanic Update` قرار دارند. نصب از Edit Mode با `Install Lava and Balanced Craters` و آزمون جداگانه با `Verify Lava and Craters` انجام می‌شود. آزمون از ذخیرهٔ جدا در `Library/VolcanicTests` استفاده می‌کند. گزارش اصلی در `Library/VolcanicVerification.txt` و نسخهٔ ثبت‌شده در `Docs/Verification/VolcanicVerification.txt` قرار دارد.

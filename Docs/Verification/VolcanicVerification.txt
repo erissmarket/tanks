@@ -1,0 +1,8 @@
+PASS animated lava uses fewer than 1000 vertices
+PASS rocket crater is about 0.30 units deep and leaves distant ground intact
+PASS even oversized explosion terrain depth stays below 0.50 units
+PASS reset restores crater geometry and invalid sizes do not modify ground
+PASS original 32-point tank damage is unchanged
+PASS lava respects pause, defeats immersed tank as Fall and emits one splash
+PASS restart restores tank visuals, health and terrain
+PASS all volcanic update checks.

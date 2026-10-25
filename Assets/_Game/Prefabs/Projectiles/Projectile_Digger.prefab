@@ -212,9 +212,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e73ecbf570ebc3647b6960d20f2229dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Projectiles.DiggerImpactHandler
-  digSteps: 6
-  digStepDistance: 0.35
-  digCarveRadius: 0.5
+  digSteps: 4
+  digStepDistance: 0.25
+  digCarveRadius: 0.34
   digStepInterval: 0.05
   alignAlongVelocity: 1
   explodeOnDirectTankHit: 1

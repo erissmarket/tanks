@@ -42,7 +42,7 @@ namespace TankGame.Projectiles
             }
 
             foreach (DestructibleTerrain terrain in terrains)
-                terrain.Carve(center, radius);
+                terrain.CarveExplosion(center, radius);
             if (damage == 0f) return;
 
             foreach (IDamageable target in targets)

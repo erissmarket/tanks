@@ -3199,6 +3199,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 752934675}
   m_CullTransparentMesh: 1
+--- !u!1 &765233045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 765233047}
+  - component: {fileID: 765233046}
+  m_Layer: 0
+  m_Name: Underground Lava
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &765233046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 765233045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb3d4d86e50cfc742b7535431fcdc310, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankGame.Terrain.LavaHazard
+  lavaMaterial: {fileID: 2100000, guid: b334c3b629b27544397d05b5d1795d31, type: 2}
+  match: {fileID: 1867302567}
+  surfaceY: -3.85
+  left: -10
+  right: 10
+  bottom: -5.8
+--- !u!4 &765233047
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 765233045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &820264937
 GameObject:
   m_ObjectHideFlags: 0
@@ -7319,6 +7369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Core.MatchFlowController
   rules: {fileID: 11400000, guid: 78839375472c2ef47957a9fd5bde7609, type: 2}
+  lava: {fileID: 765233046}
 --- !u!4 &1867302568
 Transform:
   m_ObjectHideFlags: 0
@@ -7778,6 +7829,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TankGame.Terrain.DestructibleTerrain
   grassRenderer: {fileID: 906547727}
   scorchWidth: 0.16
+  blastCraterScale: 0.36
+  blastDepthFraction: 0.55
+  maximumBlastCraterRadius: 0.85
 --- !u!1 &2014528866
 GameObject:
   m_ObjectHideFlags: 0
@@ -8229,3 +8283,4 @@ SceneRoots:
   - {fileID: 820264940}
   - {fileID: 2105976713}
   - {fileID: 50770199}
+  - {fileID: 765233047}
