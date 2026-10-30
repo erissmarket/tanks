@@ -18,4 +18,4 @@ MonoBehaviour:
   skyTint: {r: 0.74, g: 0.85, b: 0.94, a: 1}
   farMountainTint: {r: 1.19, g: 1.2, b: 1.2, a: 1}
   nearMountainTint: {r: 1.1, g: 1.12, b: 1.15, a: 1}
-  accentColor: {r: 0.2, g: 0.5, b: 0.67, a: 1}
+  accentColor: {r: 0.27, g: 0.48, b: 0.57, a: 1}

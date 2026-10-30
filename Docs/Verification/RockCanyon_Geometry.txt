@@ -1,0 +1,1 @@
+PASS distinct rock elevations; safe tank spawn shelves; 52 collider probes; real terrain explosion; rock reset; return to original grass geometry.

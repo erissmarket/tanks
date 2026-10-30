@@ -41,6 +41,7 @@ namespace TankGame.Presentation
         private void Awake()
         {
             EffectMaterial=effectMaterial!=null?new Material(effectMaterial):new Material(Shader.Find("Sprites/Default"));
+            if(GetComponent<BattleLighting>()==null)gameObject.AddComponent<BattleLighting>();
             audioFx=gameObject.AddComponent<FeedbackAudio>();font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             match=FindAnyObjectByType<MatchFlowController>();view=Camera.main;
             if(view!=null){cameraHome=view.transform.position;baseSize=view.orthographicSize;halfWidth=baseSize*16f/9f;}

@@ -1,0 +1,21 @@
+PASS launch shows home with controls blocked and no match reserved
+PASS battle setup and back never spend a turn or start a match
+PASS garage from home returns home before the first match
+PASS garage setup action routes through preparation rather than firing
+PASS all seven starting weapons can be selected and invalid index is rejected
+PASS preparation environment and starting weapon persist in the profile
+PASS settings sound toggle and help return to home
+PASS start uses chosen weapon and double activation cannot reserve another match
+PASS pause freezes timer and blocks fire; resume preserves remaining time
+PASS garage and settings opened during pause cannot resume gameplay on back
+PASS cancel leaving keeps the current match paused and unrewarded
+PASS confirm leaving returns home as surrender with zero reward
+PASS portrait orientation pauses a battle and returning landscape requires resume
+PASS UI blocking rejects held touch and fire even during an authorized turn
+PASS multitouch hold releases only after all pointers lift and clears on disable
+PASS actual match result opens result screen and persists one reward
+PASS garage return after result and play again do not duplicate prior rewards
+PASS cluster presentation shows children damage and radius
+PASS safe area normalizes notch insets and rejects zero or invalid dimensions
+PASS menus and touch docks fit landscape phones and tablet aspect ratios
+PASS all phase-five checks.

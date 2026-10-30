@@ -1,0 +1,13 @@
+PASS Snow scenery appears only on SNOW
+PASS 112 soft flakes use one bounded 1008-vertex mesh
+PASS Scenery adds no gameplay colliders
+PASS Grass/rock restore the exact original background visibility
+PASS Repeated theme switches do not duplicate scenery
+PASS Scenery and theme switches preserve exact collision geometry
+PASS Disabling snow restores the normal scene
+PASS Re-enabling restores snow without duplicate objects
+PASS Snowfall animates during active play
+PASS Game pause freezes snowfall
+PASS Other themes do not update snowfall
+PASS All terrain silhouette, crater and scorch regression checks pass
+PASS all snow environment checks. Test profile isolated; normal save untouched.

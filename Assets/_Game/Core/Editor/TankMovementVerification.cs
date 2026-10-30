@@ -103,6 +103,15 @@ public static class TankMovementVerification
                 case 0:
                     Check(human.GetComponentsInChildren<Rigidbody2D>().Length==1&&enemy.GetComponentsInChildren<Rigidbody2D>().Length==1,"Tank retained duplicate rigidbodies");
                     Pass("each visible tank uses one physics body");
+                    foreach(var tankBody in new[]{human,enemy})
+                    {
+                        var tracks=tankBody.transform.Find("TankVisual/Tracks").GetComponent<SpriteRenderer>();
+                        var hull=tankBody.GetComponent<CapsuleCollider2D>();
+                        float visualGap=tracks.bounds.min.y-terrain.SurfaceHeightAt(tankBody.position.x);
+                        Check(Mathf.Abs(tracks.bounds.min.y-hull.bounds.min.y)<.02f,"Track artwork does not match the physical hull bottom");
+                        Check(Mathf.Abs(visualGap)<.04f,"Tank tracks float above or sink below visible ground: "+visualGap);
+                        Pass($"{tankBody.name} visible track contact matches terrain: gap {visualGap:0.000} world units");
+                    }
                     Check(!ai.IsMoving&&shots==0,"Enemy acted during player turn");
                     humanStart=human.position.x;actions.Move(0,1);stage=1;due=EditorApplication.timeSinceStartup+.6;break;
                 case 1:

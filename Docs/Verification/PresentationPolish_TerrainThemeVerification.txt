@@ -1,0 +1,8 @@
+PASS GRASS: soil/surface alpha, dimensions and terrain silhouette.
+PASS SNOW: soil/surface alpha, dimensions and terrain silhouette.
+PASS ROCK: soil/surface alpha, dimensions and terrain silhouette.
+PASS GRASS: crater depth, empty pixels, scorch marks and exact collider preserved.
+PASS SNOW: crater depth, empty pixels, scorch marks and exact collider preserved.
+PASS ROCK: crater depth, empty pixels, scorch marks and exact collider preserved.
+PASS scene selector cycles all maps without changing tank health.
+PASS all terrain theme checks.

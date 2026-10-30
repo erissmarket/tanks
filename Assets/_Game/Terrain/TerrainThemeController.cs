@@ -49,7 +49,7 @@ namespace TankGame.Terrain
             if (theme.soil == null || theme.surface == null)
                 throw new InvalidOperationException("Terrain theme requires soil and surface sprites.");
             if (Application.isPlaying && terrain != null)
-                terrain.ApplyAppearance(theme.soil, theme.surface);
+                terrain.ApplyAppearance(theme.soil, theme.surface, index==2||selectedTheme==2);
             else
             {
                 soilRenderer.sprite = theme.soil;

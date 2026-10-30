@@ -1,0 +1,5 @@
+PASS Both tanks have contact shadows
+PASS Real falling rocket damages the tank and creates explosion light
+PASS One detonation produces one light
+PASS Pause freezes explosion animation
+PASS Explosion light expires without leftover objects

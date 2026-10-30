@@ -16,6 +16,10 @@ namespace TankGame.Data
         [Min(0)] public float shieldCapacity = 60;
         public Color color = new Color(.32f,.64f,.25f);
         public Sprite bodySprite, turretSprite, thumbnail;
+        public bool useSourceArtwork;
+        public Sprite enemyBodySprite, barrelSprite, tracksSprite;
+        public bool detailedArtwork;
+        public Sprite enemyBarrelSprite, enemyTracksSprite;
 
         public bool Supports(ShieldData shield) => shield == null || shield.capacity <= shieldCapacity;
         public void Validate()

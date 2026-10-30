@@ -25,7 +25,7 @@ namespace TankGame.Presentation
         public bool IsOpen => overlay!=null&&overlay.activeSelf;
         private void Start()
         {
-            font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            font=InterfaceLayout.Font;
             var open=Button(transform,"Garage","GARAGE",new Vector2(0,1),new Vector2(122,-174),new Vector2(168,64));
             open.onClick.AddListener(Open);
             open.gameObject.SetActive(!externalNavigation);
@@ -142,7 +142,7 @@ namespace TankGame.Presentation
         private RectTransform Panel(Transform parent,string name,Vector2 anchor,Vector2 offset,Vector2 size,Color color)
         {
             var go=new GameObject(name,typeof(RectTransform),typeof(Image));go.transform.SetParent(parent,false);var rect=(RectTransform)go.transform;
-            Position(rect,anchor,offset,size);go.GetComponent<Image>().color=color;return rect;
+            Position(rect,anchor,offset,size);go.GetComponent<Image>().color=color;if(size.x>0&&size.y>0)InterfaceLayout.StylePlate(go.GetComponent<Image>(),size.y>60);return rect;
         }
         private static void Position(RectTransform rect,Vector2 anchor,Vector2 offset,Vector2 size)
         {rect.anchorMin=rect.anchorMax=anchor;rect.pivot=new Vector2(.5f,.5f);rect.anchoredPosition=offset;rect.sizeDelta=size;}

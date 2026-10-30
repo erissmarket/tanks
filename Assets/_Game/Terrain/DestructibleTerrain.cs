@@ -72,6 +72,8 @@ namespace TankGame.Terrain
                 while (y >= 0 && soilPixels[y * width + x].a == 0) y--;
                 heights[x] = (y + 1 - pivot.y) / ppu;
             }
+            // Initial collision must use the same silhouette as subsequent crater rebuilds.
+            RebuildCollider();
         }
 
         public void ResetSurface()
@@ -158,7 +160,7 @@ namespace TankGame.Terrain
         }
 
         /// <summary>Changes the map palette without resetting craters, scorch marks or collision.</summary>
-        public void ApplyAppearance(Sprite soil, Sprite surface)
+        public void ApplyAppearance(Sprite soil, Sprite surface, bool replaceUncarvedShape = false)
         {
             if (soil == null || surface == null) throw new ArgumentNullException(nameof(soil));
             InitializeSurface();
@@ -173,6 +175,14 @@ namespace TankGame.Terrain
             {
                 var newSoil = sourceSoil.GetPixels32();
                 var newSurface = sourceSurface.GetPixels32();
+                if(replaceUncarvedShape && CraterCount==0)
+                {
+                    soilPixels=(Color32[])newSoil.Clone();grassPixels=(Color32[])newSurface.Clone();
+                    for(int x=0;x<width;x++)
+                    {int y=height-1;while(y>=0&&newSoil[y*width+x].a==0)y--;heights[x]=(y+1-pivot.y)/ppu;}
+                    RebuildCollider();
+                    startingHeights=(float[])heights.Clone();startingCollider=groundCollider.GetPath(0);
+                }
                 cleanSoilPixels = (Color32[])newSoil.Clone(); cleanGrassPixels = (Color32[])newSurface.Clone();
                 // Keep exactly the same occupancy mask. Theme changes cannot refill a hole.
                 for (int i = 0; i < soilPixels.Length; i++)

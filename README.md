@@ -30,3 +30,9 @@ Git و Git LFS باید نصب باشند. پس از clone کردن مخزن، �
 - گزارش‌ها در [Docs/Verification](Docs/Verification) و شرح فازها در [Docs/Design](Docs/Design) قرار دارند.
 
 برای ساخت ویندوز از `Tools > Tank Game > Phase Seven > Build Windows Test Version` استفاده کنید. خروجی در `Builds/Windows` ایجاد می‌شود. فایل اجرایی و پوشه‌های همراه را با هم توزیع کنید. خروجی‌های ساخت و فایل ذخیرهٔ بازیکن در Git قرار نمی‌گیرند.
+
+شرح کوچک‌کردن تانک‌ها و ظاهرهای آماده در [گزارش ظاهر تانک‌ها](Docs/Design/ReadyMade_Tanks_Update.fa.md) آمده است.
+
+شرح اصلاح تماس تانک با زمین و بهبود رابط و بافت‌ها در [گزارش بهبود نمایش](Docs/Design/Presentation_Polish_Update.fa.md) آمده است.
+
+آخرین تغییرات محیط‌ها، تانک‌ها، سایه و انفجار در [LATEST_CHANGES.fa.md](LATEST_CHANGES.fa.md) آمده است.

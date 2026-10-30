@@ -1,0 +1,5 @@
+PASS tank started on intact ground at y=-1.594
+PASS support was removed with 40 rocket-sized ground-only crater operations
+PASS untouched dynamic Rigidbody fell naturally to y=-3.882
+PASS lava contact produced Fall defeat and exactly one splash
+NOTE ground-only fixture; no tank teleport, health edits, or projectile combat damage. Does not measure frequency in normal matches.

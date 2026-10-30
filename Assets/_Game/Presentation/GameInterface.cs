@@ -41,7 +41,7 @@ namespace TankGame.Presentation
         private RectTransform Page(InterfaceScreen screen,string title,Vector2 size)
         {
             var panel=InterfaceLayout.Page(transform,screen.ToString(),size);pages[screen]=panel.parent.gameObject;
-            InterfaceLayout.Label(panel,"Title",title,new Vector2(0,size.y*.5f-70),new Vector2(size.x-100,80),43);return panel;
+            InterfaceLayout.Label(panel,"Title",title,new Vector2(0,size.y*.5f-70),new Vector2(size.x-100,80),50);return panel;
         }
         private void Start()
         {
@@ -59,7 +59,7 @@ namespace TankGame.Presentation
         private void BuildHome()
         {
             var panel=Page(InterfaceScreen.Home,"TANK BATTLE",new Vector2(1540,960));
-            InterfaceLayout.Label(panel,"Tagline","Choose your tank. Shape the battlefield.",new Vector2(0,320),new Vector2(1360,70),32);
+            InterfaceLayout.Label(panel,"Tagline","TACTICAL ARTILLERY  /  EVERY SHOT SHAPES THE BATTLE",new Vector2(0,320),new Vector2(1360,70),27).color=new Color(.62f,.72f,.76f);
             var card=InterfaceLayout.Panel(panel,"Selected Loadout",new Vector2(-390,20),new Vector2(620,470),InterfaceLayout.Card);
             homeTank=InterfaceLayout.Picture(card,"Tank",null,new Vector2(0,88),new Vector2(460,195));
             homeLoadout=InterfaceLayout.Label(card,"Loadout","",new Vector2(0,-102),new Vector2(560,155),34);

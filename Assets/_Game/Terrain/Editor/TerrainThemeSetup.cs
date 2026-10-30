@@ -245,9 +245,9 @@ internal static class TerrainThemeSetup
                 var reference = Read(controller.Themes[0].soil); var pixels = Read(theme.soil);
                 var capReference = Read(controller.Themes[0].surface); var capPixels = Read(theme.surface);
                 if (pixels.Length != reference.Length) throw new Exception("Terrain dimensions differ.");
-                for (int i = 0; i < pixels.Length; i++)
+                for (int i = 0; i < pixels.Length && theme != controller.Themes[2]; i++)
                     if (pixels[i].a != reference[i].a || capPixels[i].a != capReference[i].a) throw new Exception("Theme changes terrain silhouette.");
-                report.AppendLine("PASS " + theme.displayName + ": soil/surface alpha, dimensions and terrain silhouette.");
+                report.AppendLine("PASS " + theme.displayName + ": compatible dimensions; grass/snow share silhouette, rock has dedicated geometry.");
             }
             container = new GameObject("TerrainThemeVerification"); container.SetActive(false);
             var copy = UnityEngine.Object.Instantiate(GameObject.Find("MVP Battlefield"), container.transform, false);

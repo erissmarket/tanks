@@ -23,6 +23,13 @@ MonoBehaviour:
   movementMultiplier: 1
   shieldCapacity: 60
   color: {r: 0.32, g: 0.64, b: 0.25, a: 1}
-  bodySprite: {fileID: 21300000, guid: 71a8f263398a0564f98e6c9c346edea2, type: 3}
-  turretSprite: {fileID: 21300000, guid: b5efa5d314b49b44da107e3643cdb17d, type: 3}
-  thumbnail: {fileID: 8759714861042523617, guid: 97f0738493a2e1b40a3b075a996a5ca8, type: 3}
+  bodySprite: {fileID: 21300000, guid: bb0b9c476a599464e9068e0e89a4b645, type: 3}
+  turretSprite: {fileID: 0}
+  thumbnail: {fileID: 21300000, guid: bb0b9c476a599464e9068e0e89a4b645, type: 3}
+  useSourceArtwork: 1
+  enemyBodySprite: {fileID: 21300000, guid: 1af189e0fbb0f4449b66fc9724e66df8, type: 3}
+  barrelSprite: {fileID: 21300000, guid: 9afe7bef62fbe894da107c649f60c300, type: 3}
+  tracksSprite: {fileID: 21300000, guid: c390022894cc1cb4cabc8992773aaeba, type: 3}
+  detailedArtwork: 1
+  enemyBarrelSprite: {fileID: 21300000, guid: 881fc01f33e6bc84596e3c72029c12ea, type: 3}
+  enemyTracksSprite: {fileID: 21300000, guid: f175053b9e598cf4594eaf79f1666b90, type: 3}

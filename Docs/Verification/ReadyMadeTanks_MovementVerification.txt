@@ -1,0 +1,8 @@
+PASS each visible tank uses one physics body
+PASS player moved 1.21 units through the real motor and spent movement budget
+PASS inactive tank cannot move or shoot
+PASS pause freezes enemy repositioning and prevents its shot
+PASS enemy moved 1.20 units, stopped and fired once
+PASS shot finishes and returns control to the player without duplicate enemy fire
+PASS path planning rejects steep holes, invalid destinations and map boundaries
+PASS all movement checks.
