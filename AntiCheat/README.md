@@ -1,6 +1,6 @@
 # Tank anti-cheat module
 
-This worktree belongs to the Tank Git repository. Branch codex/anticheat-foundation starts at 98a271e. AntiCheat is a standalone C# module outside Unity Assets, with no Unity, NGO or Android package dependency. The current dev/backend working tree has substantial uncommitted work. This branch intentionally isolates the module until an integration change is reviewed.
+AntiCheat is a standalone C# module published in the Tank repository outside Unity Assets. It supports turn-based and simultaneous battles, with no Unity, NGO or Android package dependency. Development originated on codex/anticheat-foundation. Gameplay integration remains a separate change.
 
 ## Authority boundary
 
@@ -30,11 +30,11 @@ The module is tested independently. It has not been connected to the live Tank g
 
 ## Git isolation
 
-All module files are under AntiCheat in the linked worktree. Only these paths are staged and committed on this branch. No merge, cherry-pick or push is performed by this setup.
+All module files live under AntiCheat. Publication brings the module and project README onto main. The Unity gameplay tree is preserved from the existing main branch. The original backend checkout and anti-cheat worktree retain their independent branches and local work.
 
 ## Current Tank adapter mapping
 
-The implementation was informed by the current uncommitted dev/backend transport, including its protocol 12 intents and GameplayActionController boundary. This worktree's committed Unity tree is the 98a271e baseline; it does not contain the current dirty gameplay implementation. The new module compiles in isolation with Unity's bundled C# compiler and Mono.
+The implementation was informed by the current uncommitted dev/backend transport, including its protocol 12 intents and GameplayActionController boundary. The original anti-cheat worktree was based on 98a271e. The published main branch retains its own gameplay baseline and does not include the later uncommitted backend implementation. The new module compiles in isolation with Unity's bundled C# compiler and Mono.
 
 An eventual adapter must read connection ownership, session/turn epoch, flow state and CanAct from the host. It must read selected weapon ammunition, item availability, remaining reload and fuel from authoritative gameplay. Populate the value snapshot at the time the guarded callback runs. Run the guard and Unity callbacks on Unity's main thread. The lock makes the standalone boundary serialize callers; it does not make Unity APIs thread-safe.
 
