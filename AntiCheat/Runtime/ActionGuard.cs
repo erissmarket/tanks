@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace TankGame.AntiCheat
 {
@@ -8,13 +9,35 @@ namespace TankGame.AntiCheat
         private readonly object gate = new object();
         private readonly ulong[] peers;
         private readonly ulong session;
-        private readonly ulong[] sequences = new ulong[2];
+        private readonly ulong[,] sequences = new ulong[2, 2];
+        private readonly Func<double> authorityClock;
+        private readonly double[] tokens = new double[2];
+        private readonly double[] refillTime = new double[2];
+        private readonly int burst;
+        private readonly double commandsPerSecond;
+        private double lastTime;
         private bool dispatching;
 
-        public ActionGuard(ulong session, ulong playerZeroPeer, ulong playerOnePeer)
+        public ActionGuard(ulong session, ulong playerZeroPeer, ulong playerOnePeer,
+            Func<double> authorityClock = null, int burst = 48, double commandsPerSecond = 60)
         {
             if (session == 0 || playerZeroPeer == playerOnePeer)
                 throw new ArgumentException("Use a nonzero session and two distinct authenticated peers.");
+            if (burst < 1 || burst > 10000 || double.IsNaN(commandsPerSecond)
+                || double.IsInfinity(commandsPerSecond) || commandsPerSecond <= 0 || commandsPerSecond > 10000)
+                throw new ArgumentOutOfRangeException(nameof(burst));
+            var watch = Stopwatch.StartNew();
+            this.authorityClock = authorityClock ?? (() => watch.Elapsed.TotalSeconds);
+            double now = this.authorityClock();
+            if (!ValidTime(now)) throw new ArgumentException("Authority clock must return finite nonnegative seconds.");
+            lastTime = now;
+            this.burst = burst;
+            this.commandsPerSecond = commandsPerSecond;
+            for (int i = 0; i < 2; i++)
+            {
+                tokens[i] = burst;
+                refillTime[i] = now;
+            }
             this.session = session;
             peers = new[] { playerZeroPeer, playerOnePeer };
         }
@@ -34,10 +57,22 @@ namespace TankGame.AntiCheat
                 if (dispatching) return new ActionDecision(Rejection.Busy);
                 int slot = Array.IndexOf(peers, authenticatedSender);
                 if (slot < 0) return new ActionDecision(Rejection.UnknownPeer);
+                double now = authorityClock();
+                if (!ValidTime(now) || now < lastTime) return new ActionDecision(Rejection.InvalidHostTime);
+                lastTime = now;
+                // Charge authenticated traffic before payload validation. Stop retains its safety path.
+                tokens[slot] = Math.Min(burst, tokens[slot] + (now - refillTime[slot]) * commandsPerSecond);
+                refillTime[slot] = now;
+                bool stop = intent.Kind == ActionKind.Stop && intent.Player == slot && Valid(intent)
+                    && intent.Session == session;
+                if (!stop && tokens[slot] < 1) return new ActionDecision(Rejection.RateLimited);
+                if (!stop) tokens[slot]--;
                 if (intent.Player != slot) return new ActionDecision(Rejection.WrongOwner);
                 if (!Valid(intent)) return new ActionDecision(Rejection.InvalidCommand);
                 if (intent.Session != session) return new ActionDecision(Rejection.WrongSession);
-                if (intent.Sequence == 0 || intent.Sequence <= sequences[slot])
+                // Unreliable aim samples cannot invalidate ordered reliable actions.
+                int lane = intent.Kind == ActionKind.Aim ? 1 : 0;
+                if (intent.Sequence == 0 || intent.Sequence <= sequences[slot, lane])
                     return new ActionDecision(Rejection.StaleSequence);
 
                 dispatching = true;
@@ -46,7 +81,7 @@ namespace TankGame.AntiCheat
                     var state = snapshot(slot);
                     var reason = ValidateState(intent, state);
                     if (reason != Rejection.None) return new ActionDecision(reason);
-                    sequences[slot] = intent.Sequence;
+                    sequences[slot, lane] = intent.Sequence;
                     return new ActionDecision(execute(intent) ? Rejection.None : Rejection.GameplayRejected);
                 }
                 finally { dispatching = false; }
@@ -105,10 +140,13 @@ namespace TankGame.AntiCheat
                         && Math.Abs(magnitude - 1) <= .01;
                 case ActionKind.SelectWeapon:
                 case ActionKind.UseItem: return intent.Y == 0 && intent.X >= 0
-                    && intent.X <= int.MaxValue && Math.Floor(intent.X) == intent.X;
+                    && (double)intent.X <= int.MaxValue && Math.Floor(intent.X) == intent.X;
                 default: return false;
             }
         }
+
+        private static bool ValidTime(double value)
+            => !double.IsNaN(value) && !double.IsInfinity(value) && value >= 0;
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     }

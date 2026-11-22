@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using TankGame.AntiCheat;
 
 internal static class GuardTests
@@ -76,6 +77,77 @@ internal static class GuardTests
             "callback reentrancy blocked");
         state.MatchActive = false;
         Reason(Rejection.InactiveMatch, Intent(), "ended match");
+        state.MatchActive = true;
+        state.CanAct = false;
+        Reason(Rejection.NoControl, Intent(), "revoked control");
+        state.CanAct = true;
+        state.RequestedSelectionAvailable = false;
+        Reason(Rejection.UnavailableSelection, Intent(kind: ActionKind.UseItem, x: 0), "unavailable item");
+        state.RequestedSelectionAvailable = true;
+        state.FuelRemaining = float.NaN;
+        Reason(Rejection.NoFuel, Intent(kind: ActionKind.Move), "nonfinite host fuel");
+        state.ReloadRemaining = float.NaN;
+        Reason(Rejection.Reloading, Intent(), "nonfinite host cooldown");
+        state.ReloadRemaining = 0;
+        guard = new ActionGuard(7, 20, 30);
+        Check(guard.Process(20, Intent(1000, kind: ActionKind.Aim), _ => state, _ => true).Accepted,
+            "independent aim lane");
+        Check(guard.Process(20, Intent(1), _ => state, _ => true).Accepted,
+            "delayed reliable fire survives newer aim");
+        Check(guard.Process(20, Intent(999, kind: ActionKind.Aim), _ => state, _ => true).Reason == Rejection.StaleSequence,
+            "stale aim sample rejected");
+
+        double clock = 0;
+        guard = new ActionGuard(7, 20, 30, () => clock, burst: 2, commandsPerSecond: 2);
+        Check(guard.Process(20, Intent(1), _ => state, _ => true).Accepted, "rate initial first");
+        Check(guard.Process(20, Intent(2), _ => state, _ => true).Accepted, "rate initial second");
+        Check(guard.Process(20, Intent(3), _ => state, _ => true).Reason == Rejection.RateLimited, "burst rejected");
+        Check(guard.Process(20, Intent(3, kind: ActionKind.Stop, x: 0), _ => state, _ => true).Accepted,
+            "stop works after burst exhaustion");
+        Check(guard.Process(20, Intent(3, kind: ActionKind.Stop, x: 0), _ => state, _ => true).Reason == Rejection.StaleSequence,
+            "stop remains replay protected");
+        Check(guard.Process(30, Intent(1, player: 1), _ => state, _ => true).Accepted, "rate isolation between players");
+        clock = .5;
+        Check(guard.Process(20, Intent(4), _ => state, _ => true).Accepted, "server clock refills quota");
+        clock = .4;
+        Check(guard.Process(20, Intent(5), _ => state, _ => true).Reason == Rejection.InvalidHostTime, "clock rollback rejected");
+        clock = double.NaN;
+        Check(guard.Process(20, Intent(5), _ => state, _ => true).Reason == Rejection.InvalidHostTime, "nonfinite clock rejected");
+
+        clock = 0;
+        guard = new ActionGuard(7, 20, 30, () => clock, burst: 1);
+        Check(guard.Process(20, Intent(x: float.NaN), _ => state, _ => true).Reason == Rejection.InvalidCommand,
+            "malformed command consumes quota");
+        Check(guard.Process(20, Intent(), _ => state, _ => true).Reason == Rejection.RateLimited,
+            "malformed flood limited");
+        guard = new ActionGuard(7, 20, 30);
+        int dispatchCount = 0;
+        Parallel.For(0, 24, _ => guard.Process(20, Intent(), slot => state,
+            command => { dispatchCount++; return true; }));
+        Check(dispatchCount == 1, "concurrent duplicate fire dispatches once");
+        guard = new ActionGuard(7, 20, 30);
+        bool propagated = false;
+        try
+        {
+            guard.Process(20, Intent(), _ => state, _ => { throw new Exception("host execution failure"); });
+        }
+        catch (Exception error) { propagated = error.Message == "host execution failure"; }
+        Check(propagated, "unexpected gameplay exception propagates");
+        Check(guard.Process(20, Intent(), _ => state, _ => true).Reason == Rejection.StaleSequence,
+            "throwing callback cannot replay");
+        Check(guard.Process(20, Intent(2), _ => state, _ => true).Accepted, "dispatch lock released after exception");
+
+        guard = new ActionGuard(8, 20, 30);
+        Check(guard.Process(20, Intent(), _ => state, _ => true).Reason == Rejection.WrongSession,
+            "old match packet rejected by fresh guard");
+        state.Session = 8;
+        state.Epoch = 2;
+        Check(guard.Process(20, Intent(session: 8, epoch: 2), _ => state, _ => true).Accepted,
+            "new match accepts fresh sequence");
+        bool rejectedClock = false;
+        try { new ActionGuard(7, 20, 30, () => double.PositiveInfinity); }
+        catch (ArgumentException) { rejectedClock = true; }
+        Check(rejectedClock, "invalid initial clock");
         Console.WriteLine(passed + " checks passed");
         return 0;
     }
