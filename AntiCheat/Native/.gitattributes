@@ -1,0 +1,5 @@
+# Classify only the standalone native source; preserve the rest of the repository statistics.
+*.c   linguist-language=C linguist-detectable=true linguist-generated=false linguist-vendored=false
+*.h   linguist-language=C linguist-detectable=true linguist-generated=false linguist-vendored=false
+*.cpp linguist-language=C++ linguist-detectable=true linguist-generated=false linguist-vendored=false
+*.hpp linguist-language=C++ linguist-detectable=true linguist-generated=false linguist-vendored=false
